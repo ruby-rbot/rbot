@@ -41,8 +41,6 @@ Please note that the logfile doesn't contain IRC logs (which are located at
 #
 # This is free software, see COPYING for licensing details
 
-$VERBOSE=true
-
 require 'etc'
 require 'getoptlong'
 require 'fileutils'
