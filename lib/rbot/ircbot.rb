@@ -1,3 +1,4 @@
+# encoding: UTF-8
 #-- vim:sw=2:et
 #++
 #
@@ -59,7 +60,7 @@ def rawlog(level, message=nil, who_pos=1)
   when String
     str = message
   else
-    str = message.pretty_inspect
+    str = message.pretty_inspect rescue '?'
   end
   qmsg = Array.new
   str.each_line { |l|
