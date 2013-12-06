@@ -1,3 +1,4 @@
+# encoding: UTF-8
 #-- vim:sw=2:et
 #++
 #
@@ -10,12 +11,6 @@
 require 'resolv'
 require 'net/http'
 require 'cgi'
-begin
-  require 'iconv'
-rescue LoadError => e
-  error "Couldn't load 'iconv':  #{e}"
-  error "Non-UTF-8 webpages will not be properly supported"
-end
 
 begin
   require 'net/https'
@@ -72,23 +67,22 @@ module ::Net
 
     def body_to_utf(str)
       charsets = self.body_charset(str) or return str
-      return str unless defined? Iconv
 
       charsets.reverse_each do |charset|
-        # XXX: this one is really ugly, but i don't know how to make it better
-        #  -jsn
-
-        0.upto(5) do |off|
-          begin
-            debug "trying #{charset} / offset #{off}"
-            return Iconv.iconv('utf-8//ignore',
-                               charset,
-                               str.slice(0 .. (-1 - off))).first
-          rescue
-            debug "conversion failed for #{charset} / offset #{off}"
+        begin
+          debug "try decoding using #{charset}"
+          str.force_encoding(charset)
+          tmp = str.encode(Encoding::UTF_8)
+          if tmp
+            str = tmp
+            break
           end
+        rescue
+          error 'failed to use encoding'
+          error $!
         end
       end
+
       return str
     end
 
@@ -105,7 +99,8 @@ module ::Net
           # If we can't unpack the whole stream (e.g. because we're doing a
           # partial read
           debug "full gunzipping failed (#{e}), trying to recover as much as possible"
-          ret = ""
+          ret = ''
+          ret.force_encoding(Encoding::ASCII_8BIT)
           begin
             Zlib::GzipReader.new(StringIO.new(str)).each_byte { |byte|
               ret << byte
