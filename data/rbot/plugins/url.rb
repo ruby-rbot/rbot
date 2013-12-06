@@ -27,6 +27,12 @@ class UrlPlugin < Plugin
   Config.register Config::BooleanValue.new('url.first_par',
     :default => false,
     :desc => "Also try to get the first paragraph of a web page")
+  Config.register Config::IntegerValue.new('url.first_par_length',
+    :default => 150,
+    :desc => "The max length of the first paragraph")
+  Config.register Config::ArrayValue.new('url.first_par_whitelist',
+    :default => ['twitter.com'],
+    :desc => "List of url patterns to show the content for.")
   Config.register Config::BooleanValue.new('url.info_on_list',
     :default => false,
     :desc => "Show link info when listing/searching for urls")
@@ -93,7 +99,6 @@ class UrlPlugin < Plugin
     begin
       debug "+ getting info for #{url.request_uri}"
       info = @bot.filter(:htmlinfo, url)
-      debug info
       logopts[:htmlinfo] = info
       resp = info[:headers]
 
@@ -101,7 +106,23 @@ class UrlPlugin < Plugin
 
       if info[:content]
         logopts[:extra] = info[:content]
-        extra << "#{Bold}text#{Bold}: #{info[:content]}" if @bot.config['url.first_par']
+
+        max_length = @bot.config['url.first_par_length']
+
+        whitelist = @bot.config['url.first_par_whitelist']
+        content = nil
+        if whitelist.length > 0
+          whitelist.each do |pattern|
+            if Regexp.new(pattern, Regexp::IGNORECASE).match(url.to_s)
+              content = info[:content][0...max_length]
+              break
+            end
+          end
+        else
+          content = info[:content][0...max_length]
+        end
+
+        extra << "#{Bold}text#{Bold}: #{content}" if @bot.config['url.first_par'] and content
       else
         logopts[:extra] = String.new
         logopts[:extra] << "Content Type: #{resp['content-type']}"
