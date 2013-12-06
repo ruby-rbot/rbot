@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 #
 # Load rbot from this directory. (No need to install it with setup.rb)
 #
