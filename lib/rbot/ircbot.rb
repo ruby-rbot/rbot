@@ -144,7 +144,6 @@ end
 
 require 'rbot/load-gettext'
 require 'rbot/config'
-require 'rbot/config-compat'
 
 require 'rbot/irc'
 require 'rbot/rfc2812'
