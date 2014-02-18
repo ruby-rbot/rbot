@@ -84,13 +84,7 @@ class Registry
     end
 
     def registry
-      #debug 'access registry (cached)' if @registry
-      #@registry ||= DBM.open(@filename, 0666, DBM::WRCREAT)
-      if not @registry
-        debug 'open registry, ' + @filename
-        @registry = DBM.open(@filename, 0666, DBM::WRCREAT)
-      end
-      @registry
+      @registry ||= DBM.open(@filename, 0666, DBM::WRCREAT)
     end
 
     def flush
