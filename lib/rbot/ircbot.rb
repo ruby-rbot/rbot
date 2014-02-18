@@ -186,11 +186,6 @@ class Bot
   # TODO multiserver
   attr_reader :socket
 
-  # bot's object registry, plugins get an interface to this for persistant
-  # storage (hash interface tied to a db file, plugins use Accessors to store
-  # and restore objects in their own namespaces.)
-  attr_reader :registry
-
   # bot's plugins. This is an instance of class Plugins
   attr_reader :plugins
 
@@ -431,11 +426,11 @@ class Bot
       },
       :desc => "Percentage of IRC penalty to consider when sending messages to prevent being disconnected for excess flood. Set to 0 to disable penalty control.")
     Config.register Config::StringValue.new('core.db',
-      :default => "bdb",
-      :wizard => true, :default => "bdb",
-      :validate => Proc.new { |v| ["bdb", "tc"].include? v },
+      :default => "dbm",
+      :wizard => true, :default => "dbm",
+      :validate => Proc.new { |v| ["dbm"].include? v },
       :requires_restart => true,
-      :desc => "DB adaptor to use for storing settings and plugin data. Options are: bdb (Berkeley DB, stable adaptor, but troublesome to install and unmaintained), tc (Tokyo Cabinet, new adaptor, fast and furious, but may be not available and contain bugs)")
+      :desc => "DB adaptor to use for storing the plugin data/registries. Options: dbm (included in ruby)")
 
     @argv = params[:argv]
     @run_dir = params[:run_dir] || Dir.pwd
@@ -506,10 +501,8 @@ class Bot
     end
 
     case @config["core.db"]
-      when "bdb"
-        require 'rbot/registry/bdb'
-      when "tc"
-        require 'rbot/registry/tc'
+      when "dbm"
+        require 'rbot/registry/dbm'
       else
         raise _("Unknown DB adaptor: %s") % @config["core.db"]
     end
@@ -580,8 +573,6 @@ class Bot
     File.open($opts['pidfile'] || File.join(@botclass, 'rbot.pid'), 'w') do |pf|
       pf << "#{$$}\n"
     end
-
-    @registry = Registry.new self
 
     @timer = Timer.new
     @save_mutex = Mutex.new
@@ -1026,11 +1017,6 @@ class Bot
     rescue SystemExit
       log_session_end
       exit 0
-    rescue DBFatal => e
-      fatal "fatal db error: #{e.pretty_inspect}"
-      DBTree.stats
-      log_session_end
-      exit 2
     rescue Exception => e
       error e
       will_wait = true
@@ -1109,13 +1095,6 @@ class Bot
           log "Killed by server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         retry
-      rescue DBFatal => e
-        fatal "fatal db error: #{e.pretty_inspect}"
-        DBTree.stats
-        # Why restart? DB problems are serious stuff ...
-        # restart("Oops, we seem to have registry problems ...")
-        log_session_end
-        exit 2
       rescue Exception => e
         error "non-net exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
@@ -1359,8 +1338,6 @@ class Bot
       # @timer.stop
       # debug "Closing registries"
       # @registry.close
-      debug "\t\tcleaning up the db environment ..."
-      DBTree.cleanup_env
       log "rbot quit (#{message})"
     end
   end
@@ -1402,7 +1379,6 @@ class Bot
   def save
     @save_mutex.synchronize do
       @plugins.save
-      DBTree.cleanup_logs
     end
   end
 

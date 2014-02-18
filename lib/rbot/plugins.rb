@@ -573,7 +573,6 @@ module Plugins
         return :loaded
       rescue Exception => err
         # rescue TimeoutError, StandardError, NameError, LoadError, SyntaxError => err
-        raise if err.kind_of? DBFatal
         error report_error("#{desc}#{fname} load failed", err)
         bt = err.backtrace.select { |line|
           line.match(/^(\(eval\)|#{fname}):\d+/)
@@ -956,7 +955,6 @@ module Plugins
           rescue Exception => err
             raise if err.kind_of?(SystemExit)
             error report_error("#{p.botmodule_class} #{p.name} #{method}() failed:", err)
-            raise if err.kind_of?(DBFatal)
           end
         }
       else
@@ -972,7 +970,6 @@ module Plugins
             rescue Exception => err
               raise if err.kind_of?(SystemExit)
               error report_error("#{p.botmodule_class} #{p.name} #{method}() failed:", err)
-              raise if err.kind_of?(DBFatal)
             end
           end
         }
@@ -1002,7 +999,6 @@ module Plugins
             rescue Exception => err
               raise if err.kind_of?(SystemExit)
               error report_error("#{p.botmodule_class} #{p.name} privmsg() failed:", err)
-              raise if err.kind_of?(DBFatal)
             end
             debug "Successfully delegated #{m.inspect}"
             return true
