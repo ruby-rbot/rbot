@@ -1,16 +1,12 @@
 #-- vim:sw=2:et
 #++
 #
-# The DBM class of the ruby std-lib provides wrappers for Unix-style
-# dbm or Database Manager libraries. The exact library used depends
-# on how ruby was compiled. Its any of the following: ndbm, bdb,
-# gdbm or qdbm.
-# DBM API Documentation:
-# http://ruby-doc.org/stdlib-2.1.0/libdoc/dbm/rdoc/DBM.html
+# Daybreak is a simple and very fast key value store for ruby.
+# http://propublica.github.io/daybreak/
 #
 # :title: DB interface
 
-require 'dbm'
+require 'daybreak'
 
 module Irc
 class Bot
@@ -68,7 +64,7 @@ class Registry
     def initialize(bot, name)
       @bot = bot
       @name = name.downcase
-      @filename = @bot.path 'registry_dbm', @name
+      @filename = @bot.path 'registry_daybreak', @name+'.db'
       dirs = File.dirname(@filename).split("/")
       dirs.length.times { |i|
         dir = dirs[0,i+1].join("/")+"/"
@@ -84,19 +80,17 @@ class Registry
     end
 
     def registry
-      @registry ||= DBM.open(@filename, 0666, DBM::WRCREAT)
+      @registry ||= Daybreak::DB.new(@filename)
     end
 
     def flush
-      return if !@registry
-      # ruby dbm has no flush, so we close/reopen :(
-      close
-      registry
+      return unless @registry
+      @registry.flush
     end
 
     def close
-      return if !@registry
-      registry.close
+      return unless @registry
+      @registry.close
       @registry = nil
     end
 

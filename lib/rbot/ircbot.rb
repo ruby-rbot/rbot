@@ -430,9 +430,9 @@ class Bot
     Config.register Config::StringValue.new('core.db',
       :default => "dbm",
       :wizard => true, :default => "dbm",
-      :validate => Proc.new { |v| ["dbm"].include? v },
+      :validate => Proc.new { |v| ["dbm", "daybreak"].include? v },
       :requires_restart => true,
-      :desc => "DB adaptor to use for storing the plugin data/registries. Options: dbm (included in ruby)")
+      :desc => "DB adaptor to use for storing the plugin data/registries. Options: dbm (included in ruby), daybreak")
 
     @argv = params[:argv]
     @run_dir = params[:run_dir] || Dir.pwd
@@ -469,12 +469,6 @@ class Bot
 
     repopulate_botclass_directory
 
-    registry_dir = File.join(@botclass, 'registry')
-    Dir.mkdir(registry_dir) unless File.exist?(registry_dir)
-    unless FileTest.directory? registry_dir
-      error "registry storage location #{registry_dir} is not a directory"
-      exit 2
-    end
     save_dir = File.join(@botclass, 'safe_save')
     Dir.mkdir(save_dir) unless File.exist?(save_dir)
     unless FileTest.directory? save_dir
@@ -505,6 +499,8 @@ class Bot
     case @config["core.db"]
       when "dbm"
         require 'rbot/registry/dbm'
+      when "daybreak"
+        require 'rbot/registry/daybreak'
       else
         raise _("Unknown DB adaptor: %s") % @config["core.db"]
     end
