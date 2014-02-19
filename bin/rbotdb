@@ -1,0 +1,195 @@
+#!/usr/bin/env ruby
+#-- vim:sw=2:et
+#++
+#
+# :title: Registry import/export and migration.
+#
+# You can use this script to,
+#   - backup the rbot registry in a format that is platform independent
+#   - restore backups
+#   - migrate old rbot registries bdb (ruby 1.8) and tokyocabinet.
+#
+# Author:: apoc (Matthias Hecker) <apoc@geekosphere.org>
+# Copyright:: (C) 2014 Matthias Hecker
+# License:: GPLv3
+
+begin; require 'rubygems'; rescue Exception; puts "[#{$!}]"; end
+begin; require 'dbm'; rescue Exception; puts "[#{$!}]"; end
+begin; require 'bdb'; rescue Exception; puts "[#{$!}]"; end
+begin; require 'tokyocabinet'; rescue Exception; puts "[#{$!}]"; end
+
+puts 'RBot registry backup/import script.'
+puts 'Ruby: %s | DBM: %s | BDB: %s | TC: %s' % [RUBY_VERSION, 
+                           (DBM::VERSION rescue '-'), 
+                           (BDB::VERSION rescue '-'),
+                           (TokyoCabinet::VERSION rescue '-')]
+
+if ARGV.length > 3 or ARGV.length < 2
+  puts """
+  Usage rbotdb [backup|restore] <BACKUP/RESTORE-FILE> [<PROFILE>] 
+
+  Examples:
+    rbotdb backup ~/rbot_db_backup.yaml
+    rbotdb backup ~/rbot_db_backup.yaml.gz ~/.rbot_two
+    rbotdb restore ~/rbot_db_backup.yaml
+  """
+  exit
+end
+
+mode = ARGV[0] if %w{backup restore}.include? ARGV[0]
+file = File.expand_path ARGV[1]
+profile = File.expand_path(ARGV[2] ? ARGV[2] : '~/.rbot')
+$last_error = ''
+
+class Backup
+  class RegistryFile
+    def initialize(registry, path)
+      @registry = registry
+      @path = path
+    end
+    def path
+      @path
+    end
+    def abs
+      File.expand_path(File.join(@registry, @path))
+    end
+    def ext
+      File.extname(@path)
+    end
+    def valid?
+      File.file?(abs) and %w{.db .tdb}.include? ext
+    end
+  end
+
+  def initialize(profile)
+    @profile = profile
+    @registry = File.join(profile, './registry')
+  end
+
+  # list all database files:
+  def list
+    return nil if not File.directory? @registry
+    Dir.chdir @registry
+    Dir.glob(File.join('**', '*')).map do |name|
+      RegistryFile.new(@registry, name)
+    end
+  end
+
+  def load(ext='.db')
+    @data = {}
+    list.each do |file|
+      next unless file.ext == ext
+      db = loadDBM(file)
+      db = loadBDB(file) if not db
+      db = loadTC(file) if not db
+      if not db
+        puts 'ERROR: unable to load db: %s, last error: %s' % [file.abs, $last_error]
+      else
+        puts 'Loaded: %s [%d values]' % [file.abs, db.length]
+        @data[file.path] = db
+      end
+    end
+  end
+
+  def write(file)
+    File.open(file, 'w') do |f|
+      f.write(Marshal.dump(@data))
+    end
+  end
+
+  private
+
+  def loadDBM(file)
+    path = file.abs
+    begin
+      dbm = DBM.open(path.gsub(/\.[^\.]+$/,''), 0666, DBM::READER)
+      data = dbm.to_hash
+      dbm.close
+    rescue
+      $last_error = "[%s]\n%s" % [$!, $@.join("\n")]
+    end
+    data
+  end
+
+  def loadBDB(file)
+    path = file.abs
+    begin
+      db = BDB::Hash.open(path, nil, 'r')
+      data = {}
+      db.each do |key, value|
+        data[key] = value
+      end
+      db.close
+    rescue
+      $last_error = "[%s]\n%s" % [$!, $@.join("\n")]
+    end
+    data
+  end
+
+  def loadTC(file)
+    path = file.abs
+    begin
+      db = TokyoCabinet::BDB.new
+      db.open(path, TokyoCabinet::BDB::OREADER)
+      data = {}
+      db.each do |key, value|
+        data[key] = value
+      end
+      db.close
+    rescue
+      $last_error = "[%s]\n%s" % [$!, $@.join("\n")]
+    end
+    data
+  end
+end
+
+puts 'mode = ' + mode
+puts 'profile= ' + profile
+puts 'file = ' + file
+
+if mode == 'backup'
+
+  backup = Backup.new(profile)
+
+  if File.exists? file
+    puts 'ERROR! Backup file already exists!'
+    exit
+  end
+
+  backup.load '.tdb'
+  backup.write(file)
+
+else
+
+  registry = File.join(profile, './registry')
+
+  data = Marshal.load File.read(file)
+  data.each_pair do |path, db|
+    path = File.expand_path(File.join(registry, path))
+
+    # create directories:
+    dirs = File.dirname(path).split("/")
+    dirs.length.times { |i|
+      dir = dirs[0,i+1].join("/")+"/"
+      unless File.exist?(dir)
+        puts 'create subdir:'+dir
+        Dir.mkdir(dir)
+      end
+    }
+    path.gsub!(/\.([^\.]+)$/,'')
+
+    if File.exists? path+'.db' or File.exists? path+'.tdb'
+      raise 'error, unable to restore to existing db'
+    end
+
+    puts 'restore to: '+path
+    dbm = DBM.open(path, 0666, DBM::WRCREAT)
+    db.each_pair do |key, value|
+      dbm[key] = value
+    end
+    dbm.close
+  end
+
+end
+
+
