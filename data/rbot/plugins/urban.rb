@@ -26,8 +26,10 @@ class UrbanPlugin < Plugin
     else 1 end
 
     rv = Array.new
-    s.scan(%r{<div class='word'[^>]*>.*?<a class="index"[^>]*>.*?(\d+)\..*?</a>.*?<span>(.*?)</span>.*?<div class="definition">(.+?)</div>.*?<div class="example">(.+?)</div>}m) do |num, wrd, desc, ex|
-      rv << [num.to_i, wrd.strip, desc.strip, ex.strip]
+    num = 1
+    s.scan(%r{<div class='word'[^>]*>.*?<a href="\/define[^>]*>([^<]+)</a>.*?<div class='meaning'>(.+?)</div>.*?<div class='example'>(.+?)</div>}m) do |wrd, desc, ex|
+      rv << [num, wrd.strip, desc.strip, ex.strip]
+      num += 1
     end
 
     maxnum = rv.collect {|x| x[0]}.max || 0
