@@ -33,23 +33,19 @@ module ::GeoIP
     raw = Irc::Utils.bot.httputil.get_response(url+ip)
     raw = raw.decompress_body(raw.raw_body)
 
-    regexes.each { |key, regex| res[key] = Iconv.conv('utf-8', 'ISO-8859-1', raw.scan(regex).to_s) }
+    regexes.each { |key, regex| res[key] = raw.scan(regex).join('') }
 
     return res
-  end
-
-  def self.kapsi(ip)
-    url = "http://lakka.kapsi.fi:40086/lookup.yaml?host="
-    yaml = Irc::Utils.bot.httputil.get(url+ip)
-    return YAML::load(yaml)
   end
 
   IPINFODB_URL = "http://api.ipinfodb.com/v2/ip_query.php?key=%{key}&ip=%{ip}"
 
   def self.ipinfodb(ip)
+    key = Irc::Utils.bot.config['geoip.ipinfodb_key']
+    return if not key or key.empty?
     url = IPINFODB_URL % {
       :ip => ip,
-      :key => Irc::Utils.bot.config['geoip.ipinfodb_key']
+      :key => key
     }
     debug "Requesting #{url}"
 
@@ -72,7 +68,6 @@ module ::GeoIP
 
   JUMP_TABLE = {
     "ipinfodb" => Proc.new { |ip| ipinfodb(ip) },
-    "kapsi" => Proc.new { |ip| kapsi(ip) },
     "geoiptool" => Proc.new { |ip| geoiptool(ip) },
   }
 
@@ -112,8 +107,8 @@ end
 
 class GeoIpPlugin < Plugin
   Config.register Config::ArrayValue.new('geoip.sources',
-      :default => [ "ipinfodb", "kapsi", "geoiptool" ],
-      :desc => "Which API to use for lookups. Supported values: ipinfodb, kapsi, geoiptool")
+      :default => [ "ipinfodb", "geoiptool" ],
+      :desc => "Which API to use for lookups. Supported values: ipinfodb, geoiptool")
   Config.register Config::StringValue.new('geoip.ipinfodb_key',
       :default => "",
       :desc => "API key for the IPinfoDB geolocation service")
@@ -185,7 +180,7 @@ class GeoIpPlugin < Plugin
       apis = @bot.config['geoip.sources']
       apis.compact.each { |api|
         geo = GeoIP::resolve(host, api)
-        if geo[:country] != ""
+        if geo and geo[:country] != ""
           break
         end
       }
