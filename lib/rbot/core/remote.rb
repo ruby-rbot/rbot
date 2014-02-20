@@ -311,7 +311,7 @@ class RemoteModule < CoreBotModule
   include RemoteCoreBotModule
 
   Config.register Config::BooleanValue.new('remote.autostart',
-    :default => true,
+    :default => false,
     :requires_rescan => true,
     :desc => "Whether the remote service provider should be started automatically")
 
