@@ -156,7 +156,7 @@ class Registry
 
     # like Hash#each
     def each(&block)
-      registry.each_key do |key|
+      registry.each do |key|
         block.call(key, self[key])
       end
     end
@@ -165,14 +165,14 @@ class Registry
 
     # like Hash#each_key
     def each_key(&block)
-      registry.each_key do |key|
+      registry.each do |key|
         block.call(key)
       end
     end
 
     # like Hash#each_value
     def each_value(&block)
-      registry.each_key do |key|
+      registry.each do |key|
         block.call(self[key])
       end
     end
