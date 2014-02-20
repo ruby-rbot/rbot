@@ -191,8 +191,8 @@ class Imdb
       end
 
       genre = Array.new
-      resp.body.scan(/<a\s+onclick="[^"]+"\s+href="\/genre\/[^"]+"\s+>([^<]+)<\/a>/) do |gnr|
-        genre << gnr
+      resp.body.scan(/<a\s+href="\/genre\/[^\?]+\?[^"]+"\s+>([^<]+)<\/a>/) do |gnr|
+        genre << gnr.first.strip
       end
 
       plot = resp.body.match(DESC_MATCH)[3] rescue nil
