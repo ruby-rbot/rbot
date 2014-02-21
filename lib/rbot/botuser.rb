@@ -35,7 +35,7 @@ class Bot
   module Auth
 
     Config.register Config::StringValue.new( 'auth.password',
-      :default => 'rbotauth', :wizard => true,
+      :default => [*?a..?z,*?A..?Z,*?0..?9].sample(8).join, :wizard => true,
       :on_change => Proc.new {|bot, v| bot.auth.botowner.password = v},
       :desc => _('Password for the bot owner'))
     Config.register Config::BooleanValue.new( 'auth.login_by_mask',
