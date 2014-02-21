@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.description = <<-EOF
     A modular ruby IRC bot specifically designed for ease of extension via plugins.
   EOF
-  s.requirements << 'Ruby, version 1.8.0 (or newer)'
+  s.requirements << 'Ruby, version 1.9.3 (or newer)'
 
   s.files = FileList[
 	  'lib/**/*.rb',
@@ -24,7 +24,6 @@ Gem::Specification.new do |s|
 	  'INSTALL',
 	  'Usage_en.txt',
 	  'man/rbot.1',
-	  'man/rbot-remote.1',
 	  'setup.rb',
 	  'launch_here.rb',
 	  'po/*.pot',
@@ -32,7 +31,7 @@ Gem::Specification.new do |s|
   ]
 
   s.bindir = 'bin'
-  s.executables = ['rbot', 'rbot-remote']
+  s.executables = ['rbot', 'rbotdb']
   s.default_executable = 'rbot'
   s.extensions = 'Rakefile'
 
