@@ -1128,6 +1128,12 @@ class Bot
     where = ds[:dest]
     filtered = ds[:text]
 
+    if defined? WebServiceUser and where.instance_of? WebServiceUser
+      debug 'sendmsg to web service!'
+      where.response << filtered
+      return
+    end
+
     # For starters, set up appropriate queue channels and rings
     mchan = opts[:queue_channel]
     mring = opts[:queue_ring]

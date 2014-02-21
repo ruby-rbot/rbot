@@ -872,7 +872,7 @@ class Bot
         if user.class <= BotUser
           botuser = user
         else
-          botuser = irc_to_botuser(user)
+          botuser = user.botuser
         end
         cmd = cmdtxt.to_irc_auth_command
 
