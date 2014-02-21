@@ -24,6 +24,10 @@ class YouTubePlugin < Plugin
     :default => true,
     :desc => "Should the bot display alternative URLs (swf, rstp) for YouTube videos?")
 
+  def help(plugin, topic="")
+    'youtube [search] <query> : searches youtube videos | youtube info <id> : returns description and video links'
+  end
+
   def youtube_filter(s)
     loc = Utils.check_location(s, /youtube\.com/)
     return nil unless loc
@@ -116,6 +120,7 @@ class YouTubePlugin < Plugin
     vids = []
     title = nil
     begin
+debug s.inspect
       doc = REXML::Document.new(s[:text])
       title = doc.elements["feed/title"].text
       doc.elements.each("*/entry") { |e|
@@ -148,8 +153,9 @@ class YouTubePlugin < Plugin
     debug id
 
     url = YOUTUBE_VIDEO % {:id => id}
-    resp, xml = @bot.httputil.get_response(url)
-    unless Net::HTTPSuccess === resp
+    resp = @bot.httputil.get_response(url)
+    xml = resp.body
+    unless resp.kind_of? Net::HTTPSuccess
       debug("error looking for movie %{id} on youtube: %{e}" % {:id => id, :e => xml})
       return nil
     end
@@ -198,8 +204,9 @@ class YouTubePlugin < Plugin
     what = params[:words].to_s
     searchfor = CGI.escape what
     url = YOUTUBE_SEARCH % {:words => searchfor}
-    resp, xml = @bot.httputil.get_response(url)
-    unless Net::HTTPSuccess === resp
+    resp = @bot.httputil.get_response(url)
+    xml = resp.body
+    unless resp.kind_of? Net::HTTPSuccess
       m.reply(_("error looking for %{what} on youtube: %{e}") % {:what => what, :e => xml})
       return
     end
@@ -235,3 +242,4 @@ plugin = YouTubePlugin.new
 
 plugin.map "youtube info :movie", :action => 'info', :threaded => true
 plugin.map "youtube [search] *words", :action => 'search', :threaded => true
+
