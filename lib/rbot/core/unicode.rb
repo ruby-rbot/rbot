@@ -22,6 +22,7 @@ class UnicodePlugin < CoreBotModule
 
     def in(data)
       data.force_encoding @charset if data
+      data.encode('UTF-16le', :invalid => :replace, :replace => '').encode('UTF-8')
     end
 
     def out(data)
