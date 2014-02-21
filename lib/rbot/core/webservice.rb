@@ -39,7 +39,11 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
     post = CGI::parse(req.body)
     ip = req.peeraddr[3]
 
-    command = uri.gsub('/', ' ').strip
+    if post['command']
+      command = post['command'].first
+    else
+      command = uri.gsub('/', ' ').strip
+    end
 
     username = post['username'].first
     password = post['password'].first
