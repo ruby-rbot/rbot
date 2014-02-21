@@ -14,7 +14,7 @@
 
 class RiPlugin < Plugin
 
-  RI_COMMAND = %w{ri -f simple -T}
+  RI_COMMAND = %w{ri -f ansi -T}
 
   Config.register Config::IntegerValue.new('ri.max_length',
     :default => 512,
