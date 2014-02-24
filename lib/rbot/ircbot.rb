@@ -195,6 +195,9 @@ class Bot
   # proxies etc as defined by the bot configuration/environment
   attr_accessor :httputil
 
+  # mechanize agent factory
+  attr_accessor :agent
+
   # server we are connected to
   # TODO multiserver
   def server
