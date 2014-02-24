@@ -153,6 +153,7 @@ require 'rbot/rfc2812'
 require 'rbot/ircsocket'
 require 'rbot/botuser'
 require 'rbot/timer'
+require 'rbot/registry'
 require 'rbot/plugins'
 require 'rbot/message'
 require 'rbot/language'
@@ -197,6 +198,9 @@ class Bot
 
   # mechanize agent factory
   attr_accessor :agent
+
+  # loads and opens new registry databases, used by the plugins
+  attr_accessor :registry_factory
 
   # server we are connected to
   # TODO multiserver
@@ -433,9 +437,9 @@ class Bot
     Config.register Config::StringValue.new('core.db',
       :default => "dbm",
       :wizard => true, :default => "dbm",
-      :validate => Proc.new { |v| ["dbm", "daybreak"].include? v },
+      :validate => Proc.new { |v| Registry::formats.include? v },
       :requires_restart => true,
-      :desc => "DB adaptor to use for storing the plugin data/registries. Options: dbm (included in ruby), daybreak")
+      :desc => "DB adaptor to use for storing the plugin data/registries. Options: " + Registry::formats.join(', '))
 
     @argv = params[:argv]
     @run_dir = params[:run_dir] || Dir.pwd
@@ -499,14 +503,7 @@ class Bot
       $daemonize = true
     end
 
-    case @config["core.db"]
-      when "dbm"
-        require 'rbot/registry/dbm'
-      when "daybreak"
-        require 'rbot/registry/daybreak'
-      else
-        raise _("Unknown DB adaptor: %s") % @config["core.db"]
-    end
+    @registry_factory = Registry.new @config['core.db']
 
     @logfile = @config['log.file']
     if @logfile.class!=String || @logfile.empty?

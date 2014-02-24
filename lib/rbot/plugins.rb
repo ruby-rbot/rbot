@@ -187,7 +187,7 @@ module Plugins
       @botmodule_triggers = Array.new
 
       @handler = MessageMapper.new(self)
-      @registry = Registry::Accessor.new(@bot, self.class.to_s.gsub(/^.*::/, ""))
+      @registry = @bot.registry_factory.create(@bot.path, self.class.to_s.gsub(/^.*::/, ''))
 
       @manager.add_botmodule(self)
       if self.respond_to?('set_language')
