@@ -16,6 +16,7 @@ require 'webrick'
 require 'webrick/https'
 require 'openssl'
 require 'cgi'
+require 'json'
 
 class ::WebServiceUser < Irc::User
   def initialize(str, botuser, opts={})
@@ -33,36 +34,39 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
     @bot = bot
   end
 
-  def do_POST(req, res)
-    # NOTE: still wip.
-    uri = req.path_info
-    post = CGI::parse(req.body)
-    ip = req.peeraddr[3]
-
-    if post['command']
-      command = post['command'].first
-    else
-      command = uri.gsub('/', ' ').strip
-    end
-
-    username = post['username'].first
-    password = post['password'].first
-
-    botuser = @bot.auth.get_botuser(username)
+  def dispatch_command(command, botuser, ip)
     netmask = '%s!%s@%s' % [botuser.username, botuser.username, ip]
 
-    if not botuser or botuser.password != password
-      raise 'Permission Denied'
-    end
-
-    ws_user = WebServiceUser.new(netmask, botuser)
-    message = Irc::PrivMessage.new(@bot, nil, ws_user, @bot.myself, command)
+    user = WebServiceUser.new(netmask, botuser)
+    message = Irc::PrivMessage.new(@bot, nil, user, @bot.myself, command)
 
     @bot.plugins.irc_delegate('privmsg', message)
 
+    { :reply => user.response }
+  end
+
+  # Handle a dispatch request.
+  def do_POST(req, res)
+    post = CGI::parse(req.body)
+    ip = req.peeraddr[3]
+
+    username = post['username'].first
+    password = post['password'].first
+    command = post['command'].first
+
+    botuser = @bot.auth.get_botuser(username)
+    raise 'Permission Denied' if not botuser or botuser.password != password
+
+    ret = dispatch_command(command, botuser, ip)
+
     res.status = 200
-    res['Content-Type'] = 'text/plain'
-    res.body = ws_user.response.join("\n") + "\n"
+    if req['Accept'] == 'application/json'
+      res['Content-Type'] = 'application/json'
+      res.body = JSON.dump ret
+    else
+      res['Content-Type'] = 'text/plain'
+      res.body = ret[:reply].join("\n") + "\n"
+    end
   end
 end
 
