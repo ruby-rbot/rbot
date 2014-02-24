@@ -73,7 +73,9 @@ class Registry
     # (the configured one) accessor implementation, we can just assume
     # it to be the correct accessor to use.
     cls = AbstractAccessor.get_impl.first
-    cls.new(File.join(path, 'registry_' + @format, filename.downcase))
+    db = cls.new(File.join(path, 'registry_' + @format, filename.downcase))
+    db.optimize
+    db
   end
 
   # Helper method that will return a list of supported registry formats.
