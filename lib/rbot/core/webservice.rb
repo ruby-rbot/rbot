@@ -134,6 +134,12 @@ class WebServiceModule < CoreBotModule
         # serial number which makes this feature pretty much useless.
       end
     end
+    # Logging to file in ~/.rbot
+    logfile = File.open(@bot.path('webservice.log'), 'a+')
+    opts.merge!({
+      :Logger => WEBrick::Log.new(logfile),
+      :AccessLog => [[logfile, WEBrick::AccessLog::COMBINED_LOG_FORMAT]]
+    })
     @server = WEBrick::HTTPServer.new(opts)
     debug 'webservice started: ' + opts.inspect
     @server.mount('/dispatch', DispatchServlet, @bot)
