@@ -227,6 +227,8 @@ class ImportRegistry
       case @type
       when :dbm
         write_dbm(file, hash)
+      when :tc
+        write_tc(file, hash)
       when :daybreak
         write_daybreak(file, hash)
       end
@@ -239,6 +241,19 @@ class ImportRegistry
     data.each_pair do |key, value|
       db[key] = value
     end
+    db.close
+  end
+
+  def write_tc(file, data)
+    db = TokyoCabinet::BDB.new
+    db.open(file + '.tdb',
+          TokyoCabinet::BDB::OREADER | 
+          TokyoCabinet::BDB::OCREAT | 
+          TokyoCabinet::BDB::OWRITER)
+    data.each_pair do |key, value|
+      db[key] = value
+    end
+    db.optimize
     db.close
   end
 
