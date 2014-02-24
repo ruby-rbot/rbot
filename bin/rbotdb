@@ -17,11 +17,9 @@
 
 begin; require 'rubygems'; rescue Exception; end
 
-# old registry formats:
+# load registry formats:
 begin; require 'bdb'; rescue Exception; end
 begin; require 'tokyocabinet'; rescue Exception; end
-
-# new formats:
 begin; require 'dbm'; rescue Exception; end
 begin; require 'daybreak'; rescue Exception; end
 
@@ -39,6 +37,7 @@ require 'optparse'
 TYPES = [:bdb, :tc, :dbm, :daybreak, :auto]
 options = {
   :profile => '~/.rbot',
+  :registry => nil,
   :dbfile => './%s.rbot' % DateTime.now.strftime('export_%Y-%m-%d_%H%M%S'),
   :type => :auto
 }
@@ -55,6 +54,10 @@ opt_parser = OptionParser.new do |opt|
     options[:profile] = profile
   end
 
+  opt.on('-r', '--registry [REGISTRY]', 'registry-path to read/write, Optional, defaults to: <PROFILE>/registry_<TYPE>.') do |profile|
+    options[:registry] = profile
+  end
+
   opt.on('-f', '--file [DBFILE]', 'cross-platform file to export to/import from. Defaults to: %s.' % options[:dbfile]) do |dbfile|
     options[:dbfile] = dbfile
   end
@@ -67,10 +70,11 @@ opt_parser = OptionParser.new do |opt|
 end
 
 class ExportRegistry
-  def initialize(profile, type)
+  def initialize(profile, type, registry)
     @profile = File.expand_path profile
     @type = type
-    puts 'Using type=%s profile=%s' % [@type, @profile]
+    @registry = registry
+    puts 'Using type=%s profile=%s registry=%s' % [@type, @profile, @registry.inspect]
   end
 
   # returns a hash with the complete registry data
@@ -95,6 +99,7 @@ class ExportRegistry
   end
 
   def read(listing)
+    print "~Reading... (this might take a moment)\r"
     data = {}
     count = 0
     listing.each do |file|
@@ -164,11 +169,19 @@ class ExportRegistry
   # searches in profile directory for existing registry formats
   def search
     {
-      :tc => list(File.join(@profile, 'registry'), '*.tdb'),
-      :bdb => list(File.join(@profile, 'registry'), '*.db'),
-      :dbm => list(File.join(@profile, 'registry_dbm'), '*.*'),
-      :daybreak => list(File.join(@profile, 'registry_daybreak'), '*.db'),
+      :bdb => list(get_registry, '*.db'),
+      :tc => list(get_registry('_tc'), '*.tdb'),
+      :dbm => list(get_registry('_dbm'), '*.*'),
+      :daybreak => list(get_registry('_daybreak'), '*.db'),
     }
+  end
+
+  def get_registry(suffix='')
+    if @registry
+      File.expand_path(@registry)
+    else
+      File.join(@profile, 'registry'+suffix)
+    end
   end
 
   class RegistryFile
@@ -197,8 +210,9 @@ class ExportRegistry
 end
 
 class ImportRegistry
-  def initialize(profile, type)
+  def initialize(profile, type, registry)
     @profile = File.expand_path profile
+    @registry = registry ? File.expand_path(registry) : nil
     @type = (type == :auto) ? :dbm : type
     puts 'Using type=%s profile=%s' % [@type, @profile]
   end
@@ -206,6 +220,7 @@ class ImportRegistry
   def import(data)
     puts 'Using registry type: %s' % @type
     folder = create_folder
+    print "~Importing... (this might take a moment)\r"
     data.each do |file, hash|
       file = File.join(folder, file)
       create_subdir(file)
@@ -216,7 +231,7 @@ class ImportRegistry
         write_daybreak(file, hash)
       end
     end
-    puts 'Import completed.'
+    puts  'Import successful!                        '
   end
 
   def write_dbm(file, data)
@@ -236,15 +251,10 @@ class ImportRegistry
   end
 
   def create_folder
-    folder = @profile
-    case @type
-    when :dbm
-      folder = File.join(folder, 'registry_dbm')
-    when :daybreak
-      folder = File.join(folder, 'registry_daybreak')
+    if @registry
+      folder = @registry
     else
-      puts 'ERROR: Unsupported import type: %s' % @type
-      exit
+      folder = File.join(@profile, 'registry_%s' % [@type.to_s])
     end
     Dir.mkdir(folder) unless File.directory?(folder)
     if File.directory?(folder) and Dir.glob(File.join(folder, '**')).select{|f|File.file? f}.length>0
@@ -276,7 +286,7 @@ when 'export'
     exit 
   end
 
-  reg = ExportRegistry.new(options[:profile], options[:type])
+  reg = ExportRegistry.new(options[:profile], options[:type], options[:registry])
 
   data = reg.export
 
@@ -293,7 +303,7 @@ when 'import'
     exit 
   end
 
-  reg = ImportRegistry.new(options[:profile], options[:type])
+  reg = ImportRegistry.new(options[:profile], options[:type], options[:registry])
   data = Marshal.load File.read(options[:dbfile])
 
   puts 'Read %d registry files from import file.' % data.length
