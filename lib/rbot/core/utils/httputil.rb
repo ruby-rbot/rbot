@@ -72,7 +72,7 @@ module ::Net
         begin
           debug "try decoding using #{charset}"
           str.force_encoding(charset)
-          tmp = str.encode(Encoding::UTF_8)
+          tmp = str.encode('UTF-16le', :invalid => :replace, :replace => '').encode('UTF-8')
           if tmp
             str = tmp
             break
