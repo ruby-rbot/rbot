@@ -504,6 +504,7 @@ class Bot
     end
 
     @registry_factory = Registry.new @config['core.db']
+    @registry_factory.migrate_registry_folder(path)
 
     @logfile = @config['log.file']
     if @logfile.class!=String || @logfile.empty?

@@ -83,6 +83,18 @@ class Registry
     @@formats ||= Registry.new.discover
   end
 
+  # Will detect tokyocabinet registry location: ~/.rbot/registry/*.tdb
+  #  and move it to its new location ~/.rbot/registry_tc/*.tdb
+  def migrate_registry_folder(path)
+    old_name = File.join(path, 'registry')
+    new_name = File.join(path, 'registry_tc')
+    if @format == 'tc' and File.exists?(old_name) and
+        not File.exists?(new_name) and
+        not Dir.glob(File.join(old_name, '*.tdb')).empty?
+      File.rename(old_name, new_name)
+    end
+  end
+
   # Abstract database accessor (a hash-like interface).
   class AbstractAccessor
 
