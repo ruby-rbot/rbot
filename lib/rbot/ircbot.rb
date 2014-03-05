@@ -435,8 +435,8 @@ class Bot
       },
       :desc => "Percentage of IRC penalty to consider when sending messages to prevent being disconnected for excess flood. Set to 0 to disable penalty control.")
     Config.register Config::StringValue.new('core.db',
-      :default => "dbm",
-      :wizard => true, :default => "dbm",
+      :default => default_db,
+      :wizard => true,
       :validate => Proc.new { |v| Registry::formats.include? v },
       :requires_restart => true,
       :desc => "DB adaptor to use for storing the plugin data/registries. Options: " + Registry::formats.join(', '))
@@ -819,6 +819,16 @@ class Bot
       '/etc/pki/tls/certs/ca-bundle.crt' # Fedora/RHEL
     ].find do |file|
       File.readable? file
+    end
+  end
+
+  # Determine if tokyocabinet is installed, if it is use it as a default.
+  def default_db
+    begin
+      require 'tokyocabinet'
+      return 'tc'
+    rescue LoadError
+      return 'dbm'
     end
   end
 
