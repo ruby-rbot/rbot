@@ -292,7 +292,7 @@ class Bot
       :desc => "The CA file used to verify the SSL connection.",
       :wizard => true)
     Config.register Config::StringValue.new('server.ssl_ca_path',
-      :default => '', :requires_restart => true,
+      :default => default_ssl_ca_path, :requires_restart => true,
       :desc => "Alternativly a directory that includes CA PEM files used to verify the SSL connection.",
       :wizard => true)
     Config.register Config::StringValue.new('server.password',
@@ -820,6 +820,11 @@ class Bot
     ].find do |file|
       File.readable? file
     end
+  end
+
+  def default_ssl_ca_path
+    file = default_ssl_ca_file
+    File.dirname file if file
   end
 
   # Determine if tokyocabinet is installed, if it is use it as a default.
