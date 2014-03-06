@@ -6,24 +6,12 @@ Core requirements
                             http://1978th.net/tokyocabinet/
                             you can install Ruby bindings via "gem install tokyocabinet",
                             but this still requires libtokyocabinet to be installed system-wide
-      bdb (berkeley db)      for "bdb" DB adaptor or converting from it
-                            http://raa.ruby-lang.org/project/bdb/
-                            (which requires libdb4.x or better, formerly from
-                            www.sleepycat.com, now at
-                            http://www.oracle.com/technology/products/berkeley-db/index.html)
-                            Most of the time you don't need to compile anything.
-                            If you're running Linux, your distribution should
-                            have a libdb-ruby packaged (or similar).
-                            For Windows instructions, check at the bottom
-                            of this file.
-
-      iconv                 this is needed by the httputil object and by the IRC engine
-                            to ensure consistent encoding across the bot
-
-      net/http 1.2+
-      net/https             (for debian, this will also need libopenssl-ruby)
-      socket
-      uri
+                            you can install those requirement in debian like this:
+                            sudo aptitude install libtokyocabinet9 libtokyocabinet-dev zlib1g-dev libbz2-dev
+      sqlite3               for "sqlite" DB adaptor
+                            install with gem install sqlite,
+                            this also requires development libraries on the system to be present.
+      mechanize             install it using gem install mechanize
 
 Useful but fallback provided
       ruby-gettext 1.8.0+   http://www.yotabanana.com/hiki/ruby-gettext.html?ruby-gettext
@@ -43,18 +31,13 @@ Plugin requirements
 function)
 
 twitter:
-      oauth, oauth2, json (<ruby1.9) 
+      oauth, oauth2
 
-bash, digg, slashdot, freshmeat, forecast:
-      REXML
-rss:
-      rss
 shortenurls:
       shorturl
+
 time:
       tzinfo
-translator:
-      mechanize
 
 External programs needed for rbot
 =================================
@@ -81,23 +64,15 @@ spell plugin:
 Running rbot on win32
 =====================
 
-You can install Ruby using the One-Click Ruby installer, available from
-http://rubyinstaller.rubyforge.org/
+OMYGOD no!
 
-You can find a precompiled version of the bdb package for ruby here
-http://ftp.ruby-lang.org/pub/ruby/binaries/mingw/1.8/ext/bdb-0.5.1-i386-mingw32-1.8.tar.gz
-
-When you unpack the archive (e.g. using WinZip or 7-Zip or any other tool
-of your choice) you'll notice that it contains the following directory structure:
-  usr
-   +---local
-         +---doc
-         +---lib
-and you have to move the doc and lib folders (and all their contents) in the folder
-where you installed Ruby (typically C:\Ruby\)
+    http://www.fefe.de/nowindows/
 
 
 Further instructions
 ====================
 
-For further instructions, check http://ruby-rbot.org/rbot-trac/wiki/InstallGuide
+For further instructions, check https://github.com/4poc/rbot/wiki/Install-Guide
+For tips on handling the persistent plugin storage, backup, restore 
+and migration, check: https://github.com/4poc/rbot/wiki/Registry-Migration-Notes
+
