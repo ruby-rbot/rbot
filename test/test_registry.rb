@@ -9,6 +9,9 @@ require 'tmpdir'
 
 module RegistryHashInterfaceTests
   def test_default
+    @reg.set_default(42)
+    assert_equal(42, @reg['not-here'])
+    assert_equal(42, @reg.default)
   end
 
   def test_flush
@@ -35,9 +38,11 @@ module RegistryHashInterfaceTests
   end
 
   def test_optimize
+    @reg.optimize
   end
 
   def test_close
+    @reg.close
   end
 
   def test_getset # [] and []=
