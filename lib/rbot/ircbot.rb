@@ -435,7 +435,7 @@ class Bot
       },
       :desc => "Percentage of IRC penalty to consider when sending messages to prevent being disconnected for excess flood. Set to 0 to disable penalty control.")
     Config.register Config::StringValue.new('core.db',
-      :default => default_db,
+      :default => default_db, :store_default => true,
       :wizard => true,
       :validate => Proc.new { |v| Registry::formats.include? v },
       :requires_restart => true,

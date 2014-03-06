@@ -24,6 +24,7 @@ module Config
     attr_reader :desc
     attr_reader :key
     attr_reader :wizard
+    attr_reader :store_default
     attr_reader :requires_restart
     attr_reader :requires_rescan
     attr_reader :order
@@ -52,6 +53,7 @@ module Config
       @on_change = params[:on_change]
       @validate = params[:validate]
       @wizard = params[:wizard]
+      @store_default = params[:store_default]
       @requires_restart = params[:requires_restart]
       @requires_rescan = params[:requires_rescan]
       @auth_path = "config::key::#{key.sub('.','::')}"
@@ -274,6 +276,14 @@ module Config
           error "failed to read conf.yaml: #{$!}"
         end
       end
+      # config options with :store_default to true should store
+      # their default value at first run.
+      # Some defaults might change anytime the bot starts
+      #  for instance core.db or authpw
+      @items.values.find_all {|i| i.store_default }.each do |value|
+        @config[value.key] = value.default
+      end
+
       # if we got here, we need to run the first-run wizard
       Wizard.new(@bot).run
       # save newly created config
