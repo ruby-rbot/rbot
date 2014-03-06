@@ -22,6 +22,7 @@ begin; require 'bdb'; rescue Exception; end
 begin; require 'tokyocabinet'; rescue Exception; end
 begin; require 'dbm'; rescue Exception; end
 begin; require 'daybreak'; rescue Exception; end
+begin; require 'sqlite3'; rescue Exception; end
 
 puts 'RBot Registry Backup/Restore/Migrate'
 puts '[%s]' % ['Ruby: ' + RUBY_VERSION,
@@ -29,17 +30,18 @@ puts '[%s]' % ['Ruby: ' + RUBY_VERSION,
                'BDB: ' + (BDB::VERSION rescue '-'),
                'TokyoCabinet: ' + (TokyoCabinet::VERSION rescue '-'),
                'Daybreak: ' + (Daybreak::VERSION rescue '-'),
+               'SQLite: ' + (SQLite3::VERSION rescue '-'),
               ].join(' | ')
 
 require 'date'
 require 'optparse'
 
-TYPES = [:bdb, :tc, :dbm, :daybreak, :auto]
+TYPES = [:bdb, :tc, :dbm, :daybreak, :sqlite]
 options = {
   :profile => '~/.rbot',
   :registry => nil,
   :dbfile => './%s.rbot' % DateTime.now.strftime('export_%Y-%m-%d_%H%M%S'),
-  :type => :auto
+  :type => nil
 }
 opt_parser = OptionParser.new do |opt|
   opt.banner = 'Usage: rbotdb COMMAND [OPTIONS]'
@@ -49,6 +51,10 @@ opt_parser = OptionParser.new do |opt|
   opt.separator '     import: restore rbot registry from such a file.'
   opt.separator ''
   opt.separator 'Options:'
+
+  opt.on('-t', '--type TYPE', TYPES, 'format to export/import. Values: %s.' % [TYPES.join(', ')]) do |type|
+    options[:type] = type
+  end
 
   opt.on('-p', '--profile [PROFILE]', 'rbot profile directory. Defaults to: %s.' % options[:profile]) do |profile|
     options[:profile] = profile
@@ -60,10 +66,6 @@ opt_parser = OptionParser.new do |opt|
 
   opt.on('-f', '--file [DBFILE]', 'cross-platform file to export to/import from. Defaults to: %s.' % options[:dbfile]) do |dbfile|
     options[:dbfile] = dbfile
-  end
-
-  opt.on('-t', '--type TYPE', TYPES, 'format to export/import. Values: %s. Defaults to %s.' % [TYPES.join(', '), options[:type]]) do |type|
-    options[:type] = type
   end
 
   opt.separator ''
@@ -80,19 +82,14 @@ class ExportRegistry
   # returns a hash with the complete registry data
   def export
     listings = search
-    puts 'Found registry types: bdb=%d tc=%d dbm=%d daybreak=%d' % [
+    puts listings.inspect
+    puts 'Found registry types: bdb=%d tc=%d dbm=%d daybreak=%d sqlite=%d' % [
       listings[:bdb].length, listings[:tc].length,
-      listings[:dbm].length, listings[:daybreak].length
+      listings[:dbm].length, listings[:daybreak].length, listings[:sqlite].length
     ]
-    if @type == :auto
-      @type = :bdb if listings[:bdb].length > 0
-      @type = :tc if listings[:tc].length > 0
-      @type = :dbm if listings[:dbm].length > 0
-      @type = :daybreak if listings[:daybreak].length > 0
-    end
-    if @type == :auto or listings[@type].empty?
+    if listings[@type].empty?
       puts 'No suitable registry found!'
-      return
+      exit
     end
     puts 'Using registry type: %s' % @type
     read(listings[@type])
@@ -113,6 +110,8 @@ class ExportRegistry
           read_dbm(file)
         when :daybreak
           read_daybreak(file)
+        when :sqlite
+          read_sqlite(file)
         end
         count += data[file.key].length
       rescue
@@ -166,6 +165,18 @@ class ExportRegistry
     data
   end
 
+  def read_sqlite(file)
+    data = {}
+    db = SQLite3::Database.new(file.abs)
+    res = db.execute('SELECT key, value FROM data')
+    res.each do |row|
+      key, value = row
+      data[key] = value
+    end
+    db.close
+    data
+  end
+
   # searches in profile directory for existing registry formats
   def search
     {
@@ -173,6 +184,7 @@ class ExportRegistry
       :tc => list(get_registry('_tc'), '*.tdb'),
       :dbm => list(get_registry('_dbm'), '*.*'),
       :daybreak => list(get_registry('_daybreak'), '*.db'),
+      :sqlite => list(get_registry('_sqlite'), '*.db'),
     }
   end
 
@@ -213,7 +225,7 @@ class ImportRegistry
   def initialize(profile, type, registry)
     @profile = File.expand_path profile
     @registry = registry ? File.expand_path(registry) : nil
-    @type = (type == :auto) ? :dbm : type
+    @type = type
     puts 'Using type=%s profile=%s' % [@type, @profile]
   end
 
@@ -231,6 +243,8 @@ class ImportRegistry
         write_tc(file, hash)
       when :daybreak
         write_daybreak(file, hash)
+      when :sqlite
+        write_sqlite(file, hash)
       end
     end
     puts  'Import successful!                        '
@@ -265,6 +279,16 @@ class ImportRegistry
     db.close
   end
 
+  def write_sqlite(file, data)
+    db = SQLite3::Database.new(file + '.db')
+    db.execute('CREATE TABLE data (key string, value blob)') 
+    data.each_pair do |key, value|
+      db.execute('INSERT INTO data VALUES (?, ?)', 
+            key, value)
+    end
+    db.close
+  end
+
   def create_folder
     if @registry
       folder = @registry
@@ -293,6 +317,10 @@ class ImportRegistry
 end
 
 opt_parser.parse!
+if options[:type].nil?
+  puts 'Missing Argument: -t [type]'
+  exit
+end
 
 case ARGV[0]
 when 'export'
