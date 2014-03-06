@@ -2,11 +2,11 @@
 #-- vim:sw=2:et
 #++
 #
-# :title: RBot Registry Export, Import and Migration Script.
+# :title: RBot Registry Backup, Restore and Migration Script.
 #
 # You can use this script to,
-#   - export the rbot registry in a format that is platform/engine independent
-#   - import these backups in supported formats (dbm, daybreak)
+#   - backup the rbot registry in a format that is platform/engine independent
+#   - restore these backups in supported formats (dbm, daybreak)
 #   - migrate old rbot registries bdb (ruby 1.8) and tokyocabinet.
 #
 # For more information, just execute the script without any arguments!
@@ -40,19 +40,19 @@ TYPES = [:bdb, :tc, :dbm, :daybreak, :sqlite]
 options = {
   :profile => '~/.rbot',
   :registry => nil,
-  :dbfile => './%s.rbot' % DateTime.now.strftime('export_%Y-%m-%d_%H%M%S'),
+  :dbfile => './%s.rbot' % DateTime.now.strftime('backup_%Y-%m-%d_%H%M%S'),
   :type => nil
 }
 opt_parser = OptionParser.new do |opt|
   opt.banner = 'Usage: rbotdb COMMAND [OPTIONS]'
   opt.separator ''
   opt.separator 'Commands:'
-  opt.separator '     export: store rbot registry platform-independently in a file.'
-  opt.separator '     import: restore rbot registry from such a file.'
+  opt.separator '     backup: store rbot registry platform-independently in a file.'
+  opt.separator '     restore: restore rbot registry from such a file.'
   opt.separator ''
   opt.separator 'Options:'
 
-  opt.on('-t', '--type TYPE', TYPES, 'format to export/import. Values: %s.' % [TYPES.join(', ')]) do |type|
+  opt.on('-t', '--type TYPE', TYPES, 'format to backup/restore. Values: %s.' % [TYPES.join(', ')]) do |type|
     options[:type] = type
   end
 
@@ -64,14 +64,14 @@ opt_parser = OptionParser.new do |opt|
     options[:registry] = profile
   end
 
-  opt.on('-f', '--file [DBFILE]', 'cross-platform file to export to/import from. Defaults to: %s.' % options[:dbfile]) do |dbfile|
+  opt.on('-f', '--file [DBFILE]', 'cross-platform file to backup to/restore from. Defaults to: %s.' % options[:dbfile]) do |dbfile|
     options[:dbfile] = dbfile
   end
 
   opt.separator ''
 end
 
-class ExportRegistry
+class BackupRegistry
   def initialize(profile, type, registry)
     @profile = File.expand_path profile
     @type = type
@@ -80,9 +80,8 @@ class ExportRegistry
   end
 
   # returns a hash with the complete registry data
-  def export
+  def backup
     listings = search
-    puts listings.inspect
     puts 'Found registry types: bdb=%d tc=%d dbm=%d daybreak=%d sqlite=%d' % [
       listings[:bdb].length, listings[:tc].length,
       listings[:dbm].length, listings[:daybreak].length, listings[:sqlite].length
@@ -221,7 +220,7 @@ class ExportRegistry
   end
 end
 
-class ImportRegistry
+class RestoreRegistry
   def initialize(profile, type, registry)
     @profile = File.expand_path profile
     @registry = registry ? File.expand_path(registry) : nil
@@ -229,10 +228,10 @@ class ImportRegistry
     puts 'Using type=%s profile=%s' % [@type, @profile]
   end
 
-  def import(data)
+  def restore(data)
     puts 'Using registry type: %s' % @type
     folder = create_folder
-    print "~Importing... (this might take a moment)\r"
+    print "~Restoring... (this might take a moment)\r"
     data.each do |file, hash|
       file = File.join(folder, file)
       create_subdir(file)
@@ -247,7 +246,7 @@ class ImportRegistry
         write_sqlite(file, hash)
       end
     end
-    puts  'Import successful!                        '
+    puts  'Restore successful!                        '
   end
 
   def write_dbm(file, data)
@@ -297,8 +296,8 @@ class ImportRegistry
     end
     Dir.mkdir(folder) unless File.directory?(folder)
     if File.directory?(folder) and Dir.glob(File.join(folder, '**')).select{|f|File.file? f}.length>0
-      puts 'ERROR: Unable to import!'
-      puts 'Import folder exists and is not empty: ' + folder
+      puts 'ERROR: Unable to restore!'
+      puts 'Restore folder exists and is not empty: ' + folder
       exit
     end
     folder
@@ -317,21 +316,22 @@ class ImportRegistry
 end
 
 opt_parser.parse!
-if options[:type].nil?
+if ARGV.length > 0 and options[:type].nil?
+  puts opt_parser
   puts 'Missing Argument: -t [type]'
   exit
 end
 
 case ARGV[0]
-when 'export'
+when 'backup'
   if File.exists? options[:dbfile]
-    puts 'Export file already exists.'
+    puts 'Backup file already exists.'
     exit 
   end
 
-  reg = ExportRegistry.new(options[:profile], options[:type], options[:registry])
+  reg = BackupRegistry.new(options[:profile], options[:type], options[:registry])
 
-  data = reg.export
+  data = reg.backup
 
   if not data.empty?
     File.open(options[:dbfile], 'w') do |f|
@@ -340,17 +340,17 @@ when 'export'
     puts 'Written registry to ' + options[:dbfile]
   end
 
-when 'import'
+when 'restore'
   unless File.exists? options[:dbfile]
-    puts 'Import file does not exist.'
+    puts 'Backup file does not exist.'
     exit 
   end
 
-  reg = ImportRegistry.new(options[:profile], options[:type], options[:registry])
+  reg = RestoreRegistry.new(options[:profile], options[:type], options[:registry])
   data = Marshal.load File.read(options[:dbfile])
 
-  puts 'Read %d registry files from import file.' % data.length
-  reg.import data
+  puts 'Read %d registry files from backup file.' % data.length
+  reg.restore data
 
 else
   puts opt_parser
