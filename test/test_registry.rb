@@ -7,7 +7,27 @@ require 'rbot/registry'
 require 'pp'
 require 'tmpdir'
 
+class FooObj
+  attr_reader :bar
+  def initialize(bar)
+    @bar = bar
+  end
+end
+
 module RegistryHashInterfaceTests
+  def test_object
+    @reg['store'] = {
+      :my_obj => FooObj.new(42)
+    }
+
+    assert_equal(42, @reg['store'][:my_obj].bar)
+
+    @reg.close
+    @reg = open(@tempdir)
+
+    assert_equal(42, @reg['store'][:my_obj].bar)
+  end
+
   def test_default
     @reg.set_default(42)
     assert_equal(42, @reg['not-here'])
@@ -232,83 +252,75 @@ module RegistryHashInterfaceTests
   end
 end
 
-module TempRegistryTest
-  def setup_temp
+module RegistryTestModule
+  def setup
     @tempdir = Dir.mktmpdir
+    @reg = open(@tempdir)
   end
 
-  def teardown_temp
+  def teardown
+    @reg.close
     FileUtils.remove_entry @tempdir
   end
 
   def open(path, filename='testcase')
-    @@factory ||= Irc::Bot::Registry.new(@format)
-    @reg = @@factory.create(path, filename)
+    puts 'open type: ' + @format
+    @registry_class.new(File.join(path, filename))
   end
 end
 
 class RegistryDBMTest < Test::Unit::TestCase
-  include TempRegistryTest
+  include RegistryTestModule
   include RegistryHashInterfaceTests
 
-  def setup
-    setup_temp
+  def initialize(o)
+    super o
     @format = 'dbm'
-    @reg = open(@tempdir)
-  end
-
-  def teardown
-    @reg.close
-    teardown_temp
+    Irc::Bot::Registry.new(@format)
+    @registry_class = Irc::Bot::Registry::DBMAccessor
   end
 end
 
 class RegistryTCTest < Test::Unit::TestCase
-  include TempRegistryTest
+  include RegistryTestModule
   include RegistryHashInterfaceTests
 
-  def setup
-    setup_temp
+  def initialize(o)
+    super o
     @format = 'tc'
-    @reg = open(@tempdir)
-  end
-
-  def teardown
-    @reg.close
-    teardown_temp
+    Irc::Bot::Registry.new(@format)
+    @registry_class = Irc::Bot::Registry::TokyoCabinetAccessor
   end
 end
 
 class RegistryDaybreakTest < Test::Unit::TestCase
-  include TempRegistryTest
+  include RegistryTestModule
   include RegistryHashInterfaceTests
 
-  def setup
-    setup_temp
+  def initialize(o)
+    super o
     @format = 'daybreak'
-    @reg = open(@tempdir)
-  end
-
-  def teardown
-    @reg.close
-    teardown_temp
+    Irc::Bot::Registry.new(@format)
+    @registry_class = Irc::Bot::Registry::DaybreakAccessor
   end
 end
 
-
 class RegistrySqliteTest < Test::Unit::TestCase
-  include TempRegistryTest
+  include RegistryTestModule
   include RegistryHashInterfaceTests
 
-  def setup
-    setup_temp
+  def initialize(o)
+    super o
     @format = 'sqlite'
-    @reg = open(@tempdir)
+    Irc::Bot::Registry.new(@format)
+    @registry_class = Irc::Bot::Registry::SqliteAccessor
   end
 
-  def teardown
-    @reg.close
-    teardown_temp
+  def test_duplicate_keys
+    @reg['foo'] = 1
+    @reg['foo'] = 2
+    res = @reg.registry.execute('select key from data')
+    assert res.length == 1
   end
 end
 

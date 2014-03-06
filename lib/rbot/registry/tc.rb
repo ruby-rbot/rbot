@@ -41,6 +41,13 @@ class Registry
       @registry.optimize
     end
 
+    def delete(key)
+      return default unless dbexists?
+      value = self[key]
+      registry.delete(key.to_s)
+      value # return deleted value if success
+    end
+
   end
 
 end # Registry

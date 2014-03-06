@@ -280,7 +280,7 @@ class RestoreRegistry
 
   def write_sqlite(file, data)
     db = SQLite3::Database.new(file + '.db')
-    db.execute('CREATE TABLE data (key string, value blob)') 
+    db.execute('CREATE TABLE data (key PRIMARY_KEY, value)')
     data.each_pair do |key, value|
       db.execute('INSERT INTO data VALUES (?, ?)', 
             key, value)

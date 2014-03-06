@@ -23,7 +23,7 @@ class Registry
         begin
           @registry.execute('SELECT COUNT(*) FROM data')
         rescue
-          @registry.execute('CREATE TABLE data (key string, value blob)')
+          @registry.execute('CREATE TABLE data (key PRIMARY KEY, value)')
         end
       end
       @registry
@@ -37,7 +37,7 @@ class Registry
     def [](key)
       if dbexists?
         begin
-          value = @registry.get_first_row('SELECT value FROM data WHERE key = ?', key.to_s)
+          value = registry.get_first_row('SELECT value FROM data WHERE key = ?', key.to_s)
           return restore(value.first)
         rescue
           return default
@@ -65,11 +65,17 @@ class Registry
       end
     end
 
+    alias each_pair each
+
     def has_key?(key)
       return nil unless dbexists?
       res = registry.get_first_row('SELECT COUNT(*) FROM data WHERE key = ?', key.to_s)
       return res.first > 0
     end
+
+    alias include? has_key?
+    alias member? has_key?
+    alias key? has_key?
 
     def has_value?(value)
       return nil unless dbexists?
@@ -81,10 +87,11 @@ class Registry
     def delete(key)
       return default unless dbexists?
       begin
+        value = self[key]
         registry.execute('DELETE FROM data WHERE key = ?', key.to_s)
-        registry.changes > 0
+        value if registry.changes > 0
       rescue
-        false
+        nil
       end
     end
 
@@ -100,12 +107,16 @@ class Registry
       registry.execute('DELETE FROM data')
     end
 
+    alias truncate clear
+
     # returns the number of keys in your registry namespace
     def length
       return 0 unless dbexists?
       res = registry.get_first_row('SELECT COUNT(key) FROM data')
       res.first
     end
+
+    alias size length
 
   end
 

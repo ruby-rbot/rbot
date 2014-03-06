@@ -222,8 +222,8 @@ class Registry
     # like Hash#each
     def each(&block)
       return nil unless dbexists?
-      registry.each_key do |key|
-        block.call(key, self[key])
+      registry.each do |key, value|
+        block.call(key, restore(value))
       end
     end
 
@@ -268,6 +268,7 @@ class Registry
     end
 
     # delete a key from the registry
+    # returns the value in success, nil otherwise
     def delete(key)
       return default unless dbexists?
       value = registry.delete(key.to_s)
