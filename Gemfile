@@ -1,7 +1,15 @@
 
 source 'https://rubygems.org'
 
-gem 'tokyocabinet'
+group :registry do
+  # rbot supports different databases for its persistent storage,
+  # uncomment the one you plan on using:
+  gem 'tokyocabinet' # core.db: tc
+  #gem 'daybreak' # core.db: daybreak
+  #gem 'sqlite3' # core.db: sqlite
+
+end
+
 gem 'mechanize'
 
 group :optional do
