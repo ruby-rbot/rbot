@@ -24,6 +24,11 @@ class Registry
       @registry ||= Daybreak::DB.new(@filename)
     end
 
+    def flush
+      return unless @registry
+      @registry.flush
+    end
+
     def optimize
       return unless @registry
       @registry.compact

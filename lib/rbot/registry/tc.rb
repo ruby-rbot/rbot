@@ -36,6 +36,11 @@ class Registry
       @registry.sync
     end
 
+    def optimize
+      return unless @registry
+      @registry.optimize
+    end
+
   end
 
 end # Registry

@@ -29,10 +29,9 @@ class Registry
       @registry
     end
 
-    def flush
-    end
-
     def optimize
+      return unless @registry
+      @registry.execute('VACUUM')
     end
 
     def [](key)

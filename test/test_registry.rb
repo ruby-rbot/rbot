@@ -12,6 +12,26 @@ module RegistryHashInterfaceTests
   end
 
   def test_flush
+    # I don't know if there really is a good way to test this:
+    big_string = 'A' * (1024 * 512)
+    @reg['foo'] = big_string+'a'
+
+    dbfile = @reg.filename
+    assert_not_nil(dbfile)
+    if not File.exists? dbfile
+      # dbm ext. are arbitary
+      dbfile = Dir.glob(dbfile+'.*').first
+    end
+    assert_not_nil(dbfile)
+
+    assert(File.exists?(dbfile), 'expected database to exist')
+
+    size_before = File.size(dbfile)
+    @reg['bar'] = big_string
+    @reg.flush
+    size_after = File.size(dbfile)
+
+    assert(size_before < size_after, 'expected big string to be flushed on disk!')
   end
 
   def test_optimize
@@ -210,11 +230,9 @@ end
 module TempRegistryTest
   def setup_temp
     @tempdir = Dir.mktmpdir
-    puts ' setup registry test, using %s' % @tempdir
   end
 
   def teardown_temp
-    puts ' teardown registry test, delete %s' % @tempdir
     FileUtils.remove_entry @tempdir
   end
 
@@ -262,7 +280,7 @@ class RegistryDaybreakTest < Test::Unit::TestCase
 
   def setup
     setup_temp
-    @format = 'sqlite'
+    @format = 'daybreak'
     @reg = open(@tempdir)
   end
 

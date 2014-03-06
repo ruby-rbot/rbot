@@ -23,19 +23,8 @@ class Registry
       @registry ||= DBM.open(@filename, 0666, DBM::WRCREAT)
     end
 
-    def flush
-      return if !@registry
-      # ruby dbm has no flush, so we close/reopen :(
-      close
-      registry
-    end
-
     def dbexists?
       not Dir.glob(@filename + '.*').empty?
-    end
-
-    def optimize
-      # unsupported!
     end
 
   end

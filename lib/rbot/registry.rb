@@ -98,6 +98,8 @@ class Registry
   # Abstract database accessor (a hash-like interface).
   class AbstractAccessor
 
+    attr_reader :filename
+
     # lets the user define a recovery procedure in case the Marshal
     # deserialization fails, it might be manually recover data.
     # NOTE: weird legacy stuff, used by markov plugin (WTH?)
@@ -187,13 +189,13 @@ class Registry
     # Forces flush/sync the database on disk.
     def flush
       return unless @registry
-      @registry.flush
+      # if not supported by the database, close/reopen:
+      close
+      registry
     end
 
-    # Should optimize/vacuum the database.
+    # Should optimize/vacuum the database. (if supported)
     def optimize
-      return unless @registry
-      @registry.optimize
     end
 
     # Closes the database.
