@@ -220,7 +220,7 @@ class Registry
     # like Hash#each
     def each(&block)
       return nil unless dbexists?
-      registry.each do |key|
+      registry.each_key do |key|
         block.call(key, self[key])
       end
     end
@@ -268,19 +268,16 @@ class Registry
     # delete a key from the registry
     def delete(key)
       return default unless dbexists?
-      return registry.delete(key.to_s)
+      value = registry.delete(key.to_s)
+      if value
+        restore(value)
+      end
     end
 
     # returns a list of your keys
     def keys
       return [] unless dbexists?
       return registry.keys
-    end
-
-    # just like Hash#has_both?
-    def has_both?(key, value)
-      return false unless dbexists?
-      registry.has_key?(key.to_s) and registry.has_value?(store(value))
     end
 
     # Return an array of all associations [key, value] in your namespace
