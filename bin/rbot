@@ -89,6 +89,8 @@ if File.directory? "#{defaultlib}/rbot"
 end
 
 begin
+  Encoding.default_internal = Encoding::UTF_8
+  Encoding.default_external = Encoding::UTF_8
   require 'rbot/ircbot'
 rescue LoadError => e
   puts "Error: couldn't find the rbot/ircbot module (or one of its dependencies)\n"
