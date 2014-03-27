@@ -44,7 +44,7 @@ module ::Net
       ctype = self['content-type'] || 'text/html'
       return nil unless ctype =~ /^text/i || ctype =~ /x(ht)?ml/i
 
-      charsets = ['latin1'] # should be in config
+      charsets = ['ISO-8859-1'] # should be in config
 
       if ctype.match(/charset=["']?([^\s"']+)["']?/i)
         charsets << $1
