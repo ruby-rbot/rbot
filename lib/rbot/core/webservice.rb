@@ -28,6 +28,18 @@ class ::WebServiceUser < Irc::User
   attr_accessor :response
 end
 
+class PingServlet < WEBrick::HTTPServlet::AbstractServlet
+  def initialize(server, bot)
+    super server
+    @bot = bot
+  end
+
+  def do_GET(req, res)
+    res['Content-Type'] = 'text/plain'
+    res.body = "pong\r\n"
+  end
+end
+
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
   def initialize(server, bot)
     super server
@@ -143,6 +155,7 @@ class WebServiceModule < CoreBotModule
     @server = WEBrick::HTTPServer.new(opts)
     debug 'webservice started: ' + opts.inspect
     @server.mount('/dispatch', DispatchServlet, @bot)
+    @server.mount('/ping', PingServlet, @bot)
     Thread.new { @server.start }
   end
 
