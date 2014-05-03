@@ -112,11 +112,12 @@ class Registry
       @registry = nil
       @default = nil
       @recovery = nil
+      @sub_registries = {}
     end
 
     def sub_registry(prefix)
       path = File.join(@filename.gsub(/\.[^\/\.]+$/,''), prefix.to_s)
-      return self.class.new(path)
+      @sub_registries[path] ||= self.class.new(path)
     end
 
     # creates the registry / subregistry folders
