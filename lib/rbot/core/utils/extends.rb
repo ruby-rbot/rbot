@@ -370,8 +370,17 @@ class ::String
       "#{pre}#{self}#{post}"
     end
   end
-end
 
+  # Format a string using IRC colors
+  #
+  def colorformat
+    txt = self.dup
+
+    txt.gsub!(/\*([^\*]+)\*/, Bold + '\\1' + NormalText)
+
+    return txt
+  end
+end
 
 # Extensions to the Regexp class, with some common and/or complex regular
 # expressions.
