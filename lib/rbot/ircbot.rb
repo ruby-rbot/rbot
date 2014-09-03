@@ -202,6 +202,8 @@ class Bot
   # loads and opens new registry databases, used by the plugins
   attr_accessor :registry_factory
 
+  attr_accessor :webservice
+
   # server we are connected to
   # TODO multiserver
   def server

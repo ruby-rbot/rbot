@@ -69,7 +69,12 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
     botuser = @bot.auth.get_botuser(username)
     raise 'Permission Denied' if not botuser or botuser.password != password
 
-    ret = dispatch_command(command, botuser, ip)
+    begin
+      ret = dispatch_command(command, botuser, ip)
+    rescue
+      debug '[webservice] error: ' + $!.to_s
+      debug $@.join("\n")
+    end
 
     res.status = 200
     if req['Accept'] == 'application/json'
@@ -119,6 +124,7 @@ class WebServiceModule < CoreBotModule
     @port = @bot.config['webservice.port']
     @host = @bot.config['webservice.host']
     @server = nil
+    @bot.webservice = self
     begin
       start_service if @bot.config['webservice.autostart']
     rescue => e
@@ -182,6 +188,10 @@ class WebServiceModule < CoreBotModule
       end
     end
     m.reply s
+  end
+
+  def register_servlet(plugin, servlet)
+    @server.mount('/plugin/%s' % plugin.name, servlet, plugin, @bot)
   end
 
 end
