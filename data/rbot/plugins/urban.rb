@@ -22,8 +22,6 @@ class UrbanPlugin < Plugin
     notfound = s.match %r{<i>.*?</i> isn't defined}
 
     numpages = if s[%r{<ul class="pagination[^"]+">.*?</ul>}m]
-      debug 'foo->'
-      debug $&
       $&.scan(/>(\d+)</).collect {|x| x[0].to_i}.max || 1
     else 1 end
 
