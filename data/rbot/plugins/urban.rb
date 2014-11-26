@@ -21,13 +21,15 @@ class UrbanPlugin < Plugin
 
     notfound = s.match %r{<i>.*?</i> isn't defined}
 
-    numpages = if s[%r{<div id='paginator'>.*?</div>}m]
-      $&.scan(/\d+/).collect {|x| x.to_i}.max || 1
+    numpages = if s[%r{<ul class="pagination[^"]+">.*?</ul>}m]
+      debug 'foo->'
+      debug $&
+      $&.scan(/>(\d+)</).collect {|x| x[0].to_i}.max || 1
     else 1 end
 
     rv = Array.new
     num = 1
-    s.scan(%r{<div class='word'[^>]*>.*?<a href="\/define[^>]*>([^<]+)</a>.*?<div class='meaning'>(.+?)</div>.*?<div class='example'>(.+?)</div>}m) do |wrd, desc, ex|
+    s.scan(%r{<a class="word"[^>]* href="\/define[^>]*>([^<]+)</a>.*?<div class='meaning'>(.+?)</div>.*?<div class='example'>(.+?)</div>}m) do |wrd, desc, ex|
       rv << [num, wrd.strip, desc.strip, ex.strip]
       num += 1
     end
