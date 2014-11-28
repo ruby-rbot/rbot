@@ -128,6 +128,7 @@ class GoogleTranslator < Translator
 
   def do_translate(text, from, to)
     agent = Mechanize.new
+    agent.user_agent_alias = 'Linux Mozilla'
     page = agent.get URL
     form = page.form_with(:id => 'gt-form')
     form.sl = from
