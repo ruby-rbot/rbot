@@ -51,6 +51,8 @@ module ::Net
         debug "charset #{charsets.last} added from header"
       end
 
+      # str might be invalid utf-8 that will crash on the pattern match:
+      str.encode!('UTF-8', 'UTF-8', :invalid => :replace)
       case str
       when /<\?xml\s[^>]*encoding=['"]([^\s"'>]+)["'][^>]*\?>/i
         charsets << $1
