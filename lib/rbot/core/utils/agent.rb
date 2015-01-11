@@ -52,13 +52,13 @@ class AgentFactory
   end
 
   # Returns a new, unique instance of Mechanize.
-  def create(noproxy=false)
+  def create
     agent = Mechanize.new
     agent.redirection_limit = @bot.config['agent.max_redir']
     if not @bot.config['agent.ssl_verify']
       agent.agent.http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
-    if @bot.config['agent.proxy_use'] and not noproxy
+    if @bot.config['agent.proxy_use']
       agent.set_proxy(
         @bot.config['agent.proxy_host'],
         @bot.config['agent.proxy_port'],
