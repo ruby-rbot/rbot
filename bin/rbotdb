@@ -293,6 +293,7 @@ class RestoreRegistry
   end
 
   def create_folder
+    Dir.mkdir(@profile) unless File.directory?(@profile)
     if @registry
       folder = @registry
     else
