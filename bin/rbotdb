@@ -128,7 +128,11 @@ class BackupRegistry
 
   def read_bdb(file)
     data = {}
-    db = BDB::Hash.open(file.abs, nil, 'r')
+    begin
+      db = BDB::Hash.open(file.abs, nil, 'r')
+    rescue BDB::Fatal
+      db = BDB::Btree.open(file.abs, nil, 'r')
+    end
     db.each do |key, value|
       data[key] = value
     end
