@@ -18,6 +18,254 @@ require 'openssl'
 require 'cgi'
 require 'json'
 
+module ::Irc
+class Bot
+    # A WebMessage is a web request and response object combined with helper methods.
+    #
+    class WebMessage
+      attr_reader :bot, :method, :bot, :req, :res, :post, :client, :path, :source
+      def initialize(bot, req, res)
+        @bot = bot
+        @req = req
+        @res = res
+
+        @method = req.request_method
+        if req.body and not req.body.empty?
+          @post = CGI::parse(req.body)
+        end
+        @client = req.peeraddr[3]
+
+        # login a botuser with http authentication
+        WEBrick::HTTPAuth.basic_auth(req, res, 'RBotAuth') { |username, password|
+          if username
+            botuser = @bot.auth.get_botuser(Auth::BotUser.sanitize_username(username))
+            if botuser and botuser.password == password
+              @source = botuser
+              true
+            end
+            false
+          else
+            true # no need to request auth at this point
+          end
+        }
+
+        @path = req.path
+        debug '@path = ' + @path.inspect
+      end
+
+      # The target of a RemoteMessage
+      def target
+        @bot
+      end
+
+      # Remote messages are always 'private'
+      def private?
+        true
+      end
+
+      # Sends a plaintext response
+      def send_plaintext(body, status=200)
+        @res.status = status
+        @res['Content-Type'] = 'text/plain'
+        @res.body = body
+      end
+    end
+
+    # works similar to a message mapper but for url paths
+    class WebDispatcher
+      class WebTemplate
+        attr_reader :botmodule, :pattern, :options
+        def initialize(botmodule, pattern, options={})
+          @botmodule = botmodule
+          @pattern = pattern
+          @options = options
+          set_auth_path(@options)
+        end
+
+        def recognize(m)
+          message_route = m.path[1..-1].split('/')
+          template_route = @pattern[1..-1].split('/')
+          params = {}
+
+          debug 'web mapping path %s <-> %s' % [message_route.inspect, template_route.inspect]
+
+          message_route.each do |part|
+            tmpl = template_route.shift
+            return false if not tmpl
+
+            if tmpl[0] == ':'
+              # push part as url path parameter
+              params[tmpl[1..-1].to_sym] = part
+            elsif tmpl == part
+              next
+            else
+              return false
+            end
+          end
+
+          debug 'web mapping params is %s' % [params.inspect]
+
+          params
+        end
+
+        def set_auth_path(hash)
+          if hash.has_key?(:full_auth_path)
+            warning "Web route #{@pattern.inspect} in #{@botmodule} sets :full_auth_path, please don't do this"
+          else
+            pre = @botmodule
+            words = @pattern[1..-1].split('/').reject{ |x|
+              x == pre || x =~ /^:/ || x =~ /\[|\]/
+            }
+            if words.empty?
+              post = nil
+            else
+              post = words.first
+            end
+            if hash.has_key?(:auth_path)
+              extra = hash[:auth_path]
+              if extra.sub!(/^:/, "")
+                pre += "::" + post
+                post = nil
+              end
+              if extra.sub!(/:$/, "")
+                if words.length > 1
+                  post = [post,words[1]].compact.join("::")
+                end
+              end
+              pre = nil if extra.sub!(/^!/, "")
+              post = nil if extra.sub!(/!$/, "")
+              extra = nil if extra.empty?
+            else
+              extra = nil
+            end
+            hash[:full_auth_path] = [pre,extra,post].compact.join("::")
+            debug "Web route #{@pattern} in #{botmodule} will use authPath #{hash[:full_auth_path]}"
+          end
+        end
+      end
+
+      def initialize(bot)
+        @bot = bot
+        @templates = []
+      end
+
+      def map(botmodule, pattern, options={})
+        @templates << WebTemplate.new(botmodule.to_s, pattern, options)
+        debug 'template route: ' + @templates[-1].inspect
+        return @templates.length - 1
+      end
+
+      # The unmap method for the RemoteDispatcher nils the template at the given index,
+      # therefore effectively removing the mapping
+      #
+      def unmap(botmodule, index)
+        tmpl = @templates[index]
+        raise "Botmodule #{botmodule.name} tried to unmap #{tmpl.inspect} that was handled by #{tmpl.botmodule}" unless tmpl.botmodule == botmodule.name
+        debug "Unmapping #{tmpl.inspect}"
+        @templates[handle] = nil
+        @templates.clear unless @templates.compact.size > 0
+      end
+
+      # Handle a web service request, find matching mapping and dispatch.
+      #
+      # In case authentication fails, sends a 401 Not Authorized response.
+      #
+      def handle(m)
+        if @templates.empty?
+          m.send_plaintext('no routes!', 404)
+          return false if @templates.empty?
+        end
+        failures = []
+        @templates.each do |tmpl|
+          # Skip this element if it was unmapped
+          next unless tmpl
+          botmodule = @bot.plugins[tmpl.botmodule]
+          params = tmpl.recognize(m)
+          if params
+            action = tmpl.options[:action]
+            unless botmodule.respond_to?(action)
+              failures << NoActionFailure.new(tmpl, m)
+              next
+            end
+            # check http method:
+            unless not tmpl.options.has_key? :method or tmpl.options[:method] == m.method
+              debug 'request method missmatch'
+              next
+            end
+            auth = tmpl.options[:full_auth_path]
+            debug "checking auth for #{auth.inspect}"
+            # We check for private permission
+            if m.bot.auth.permit?(m.source || Auth::defaultbotuser, auth, '?')
+              debug "template match found and auth'd: #{action.inspect} #{params.inspect}"
+              response = botmodule.send(action, m, params)
+              if m.res.sent_size == 0
+                m.send_plaintext(response.to_json)
+              end
+              return true
+            end
+            debug "auth failed for #{auth}"
+            # if it's just an auth failure but otherwise the match is good,
+            # don't try any more handlers
+            m.send_plaintext('Authentication Required!', 401)
+            return false
+          end
+        end
+        failures.each {|r|
+          debug "#{r.template.inspect} => #{r}"
+        }
+        debug "no handler found"
+        m.send_plaintext('No Handler Found!', 404)
+        return false
+      end
+    end
+
+    # Static web dispatcher instance used internally.
+    def web_dispatcher
+      if defined? @web_dispatcher
+        @web_dispatcher
+      else
+        @web_dispatcher = WebDispatcher.new(self)
+      end
+    end
+
+    module Plugins
+      # Mixin for plugins that want to provide a web interface of some sort.
+      #
+      # Plugins include the module and can then use web_map
+      # to register a url to handle.
+      #
+      module WebBotModule
+        # The remote_map acts just like the BotModule#map method, except that
+        # the map is registered to the @bot's remote_dispatcher. Also, the remote map handle
+        # is handled for the cleanup management
+        #
+        def web_map(*args)
+          # stores the handles/indexes for cleanup:
+          @web_maps = Array.new unless defined? @web_maps
+          @web_maps << @bot.web_dispatcher.map(self, *args)
+        end
+
+        # Unregister the remote maps.
+        #
+        def web_cleanup
+          return unless defined? @web_maps
+          @web_maps.each { |h|
+            @bot.web_dispatcher.unmap(self, h)
+          }
+          @web_maps.clear
+        end
+
+        # Redefine the default cleanup method.
+        #
+        def cleanup
+          super
+          web_cleanup
+        end
+      end
+    end
+end # Bot
+end # Irc
+
 class ::WebServiceUser < Irc::User
   def initialize(str, botuser, opts={})
     super(str, opts)
@@ -28,66 +276,38 @@ class ::WebServiceUser < Irc::User
   attr_accessor :response
 end
 
-class PingServlet < WEBrick::HTTPServlet::AbstractServlet
-  def initialize(server, bot)
-    super server
-    @bot = bot
-  end
-
-  def do_GET(req, res)
-    res['Content-Type'] = 'text/plain'
-    res.body = "pong\r\n"
-  end
-end
-
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
   def initialize(server, bot)
     super server
     @bot = bot
   end
 
-  def dispatch_command(command, botuser, ip)
-    netmask = '%s!%s@%s' % [botuser.username, botuser.username, ip]
-
-    user = WebServiceUser.new(netmask, botuser)
-    message = Irc::PrivMessage.new(@bot, nil, user, @bot.myself, command)
-
-    @bot.plugins.irc_delegate('privmsg', message)
-
-    { :reply => user.response }
+  def dispatch(req, res)
+    res['Server'] = 'RBot Web Service (http://ruby-rbot.org/)'
+    begin
+      m = WebMessage.new(@bot, req, res)
+      @bot.web_dispatcher.handle m
+    rescue
+      res.status = 500
+      res['Content-Type'] = 'text/plain'
+      res.body = "Error: %s\n" % [$!.to_s]
+      error 'web dispatch error: ' + $!.to_s
+      error $@.join("\n")
+    end
   end
 
-  # Handle a dispatch request.
+  def do_GET(req, res)
+    dispatch(req, res)
+  end
+
   def do_POST(req, res)
-    post = CGI::parse(req.body)
-    ip = req.peeraddr[3]
-
-    username = post['username'].first
-    password = post['password'].first
-    command = post['command'].first
-
-    botuser = @bot.auth.get_botuser(username)
-    raise 'Permission Denied' if not botuser or botuser.password != password
-
-    begin
-      ret = dispatch_command(command, botuser, ip)
-    rescue
-      debug '[webservice] error: ' + $!.to_s
-      debug $@.join("\n")
-    end
-
-    res.status = 200
-    if req['Accept'] == 'application/json'
-      res['Content-Type'] = 'application/json'
-      res.body = JSON.dump ret
-    else
-      res['Content-Type'] = 'text/plain'
-      res.body = ret[:reply].join("\n") + "\n"
-    end
+    dispatch(req, res)
   end
 end
 
 class WebServiceModule < CoreBotModule
+
+  include WebBotModule
 
   Config.register Config::BooleanValue.new('webservice.autostart',
     :default => false,
@@ -95,7 +315,7 @@ class WebServiceModule < CoreBotModule
     :desc => 'Whether the web service should be started automatically')
 
   Config.register Config::IntegerValue.new('webservice.port',
-    :default => 7260, # that's 'rbot'
+    :default => 7268,
     :requires_rescan => true,
     :desc => 'Port on which the web service will listen')
 
@@ -118,6 +338,10 @@ class WebServiceModule < CoreBotModule
     :default => '~/.rbot/wscert.pem',
     :requires_rescan => true,
     :desc => 'Certificate file to use for SSL')
+
+  Config.register Config::BooleanValue.new('webservice.allow_dispatch',
+    :default => true,
+    :desc => 'Dispatch normal bot commands, just as a user would through the web service, requires auth for certain commands just like a irc user.')
 
   def initialize
     super
@@ -160,8 +384,7 @@ class WebServiceModule < CoreBotModule
     })
     @server = WEBrick::HTTPServer.new(opts)
     debug 'webservice started: ' + opts.inspect
-    @server.mount('/dispatch', DispatchServlet, @bot)
-    @server.mount('/ping', PingServlet, @bot)
+    @server.mount('/', DispatchServlet, @bot)
     Thread.new { @server.start }
   end
 
@@ -176,22 +399,51 @@ class WebServiceModule < CoreBotModule
   end
 
   def handle_start(m, params)
-    s = ''
     if @server
-      s << 'web service already running'
+      m.reply 'web service already running'
     else
       begin
         start_service
-        s << 'web service started'
+        m.reply 'web service started'
       rescue
-        s << 'unable to start web service, error: ' + $!.to_s
+        m.reply 'unable to start web service, error: ' + $!.to_s
       end
     end
-    m.reply s
   end
 
-  def register_servlet(plugin, servlet)
-    @server.mount('/plugin/%s' % plugin.name, servlet, plugin, @bot)
+  def handle_stop(m, params)
+    if @server
+      stop_service
+      m.reply 'web service stopped'
+    else
+      m.reply 'web service not running'
+    end
+  end
+
+  def handle_ping(m, params)
+    m.send_plaintext("pong\n")
+  end
+
+  def handle_dispatch(m, params)
+    if not @bot.config['webservice.allow_dispatch']
+      m.send_plaintext('dispatch forbidden by configuration', 403)
+      return
+    end
+
+    command = m.post['command'][0]
+    if not m.source
+      botuser = Auth::defaultbotuser
+    else
+      botuser = m.source.botuser
+    end
+    netmask = '%s!%s@%s' % [botuser.username, botuser.username, m.client]
+
+    user = WebServiceUser.new(netmask, botuser)
+    message = Irc::PrivMessage.new(@bot, nil, user, @bot.myself, command)
+
+    res = @bot.plugins.irc_delegate('privmsg', message)
+
+    { :reply => user.response }
   end
 
 end
@@ -206,5 +458,16 @@ webservice.map 'webservice stop',
   :action => 'handle_stop',
   :auth_path => ':manage:'
 
+webservice.web_map '/ping',
+  :action => :handle_ping,
+  :auth_path => 'public'
+
+# executes arbitary bot commands
+webservice.web_map '/dispatch',
+  :action => :handle_dispatch,
+  :method => 'POST',
+  :auth_path => 'public'
+
 webservice.default_auth('*', false)
+webservice.default_auth('public', true)
 
