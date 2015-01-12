@@ -102,18 +102,26 @@ class Bot
         true
       end
 
+      # Sends a response with the specified body, status and content type.
+      def send_response(body, status, type)
+        @res.status = status
+        @res['Content-Type'] = type
+        @res.body = body
+      end
+
       # Sends a plaintext response
       def send_plaintext(body, status=200)
-        @res.status = status
-        @res['Content-Type'] = 'text/plain'
-        @res.body = body
+        send_response(body, status, 'text/plain')
       end
 
       # Sends a json response
       def send_json(body, status=200)
-        @res.status = status
-        @res['Content-Type'] = 'application/json'
-        @res.body = body
+        send_response(body, status, 'application/json')
+      end
+
+      # Sends a html response
+      def send_html(body, status=200)
+        send_response(body, status, 'text/html')
       end
     end
 
