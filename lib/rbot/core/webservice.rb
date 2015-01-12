@@ -73,8 +73,9 @@ class Bot
             if botuser and botuser.password == password
               @source = botuser
               true
+            else
+              false
             end
-            false
           else
             true # no need to request auth at this point
           end
@@ -351,6 +352,11 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
     begin
       m = WebMessage.new(@bot, req, res)
       @bot.web_dispatcher.handle m
+    rescue WEBrick::HTTPStatus::Unauthorized
+      res.status = 401
+      res['Content-Type'] = 'text/plain'
+      res.body = 'Authentication Required!'
+      error 'authentication error (wrong password)'
     rescue
       res.status = 500
       res['Content-Type'] = 'text/plain'
