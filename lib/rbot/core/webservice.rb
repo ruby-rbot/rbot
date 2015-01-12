@@ -308,6 +308,16 @@ class Bot
           web_cleanup
         end
       end
+
+      # And just because I like consistency:
+      #
+      module WebCoreBotModule
+        include WebBotModule
+      end
+
+      module WebPlugin
+        include WebBotModule
+      end
     end
 end # Bot
 end # Irc
@@ -353,7 +363,7 @@ end
 
 class WebServiceModule < CoreBotModule
 
-  include WebBotModule
+  include WebCoreBotModule
 
   Config.register Config::BooleanValue.new('webservice.autostart',
     :default => false,
