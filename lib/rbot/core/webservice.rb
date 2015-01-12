@@ -23,15 +23,46 @@ class Bot
     # A WebMessage is a web request and response object combined with helper methods.
     #
     class WebMessage
-      attr_reader :bot, :method, :bot, :req, :res, :post, :client, :path, :source
+      # Bot instance
+      #
+      attr_reader :bot
+      # HTTP method (POST, GET, etc.)
+      #
+      attr_reader :method
+      # Request object, a instance of WEBrick::HTTPRequest ({http://www.ruby-doc.org/stdlib-2.0/libdoc/webrick/rdoc/WEBrick/HTTPRequest.html docs})
+      #
+      attr_reader :req
+      # Response object, a instance of WEBrick::HTTPResponse ({http://www.ruby-doc.org/stdlib-2.0/libdoc/webrick/rdoc/WEBrick/HTTPResponse.html docs})
+      #
+      attr_reader :res
+      # Parsed post request parameters.
+      #
+      attr_reader :post
+      # Parsed url parameters.
+      #
+      attr_reader :args
+      # Client IP.
+      # 
+      attr_reader :client
+      # URL Path.
+      #
+      attr_reader :path
+      # The bot user issuing the command.
+      #
+      attr_reader :source
       def initialize(bot, req, res)
         @bot = bot
         @req = req
         @res = res
 
         @method = req.request_method
+        @post = {}
         if req.body and not req.body.empty?
-          @post = CGI::parse(req.body)
+          @post = parse_query(req.body)
+        end
+        @args = {}
+        if req.query_string and not req.query_string.empty?
+          @args = parse_query(req.query_string)
         end
         @client = req.peeraddr[3]
 
@@ -53,6 +84,14 @@ class Bot
         debug '@path = ' + @path.inspect
       end
 
+      def parse_query(query)
+        params = CGI::parse(query)
+        params.each_pair do |key, val|
+          params[key] = val.last
+        end
+        params
+      end
+
       # The target of a RemoteMessage
       def target
         @bot
@@ -67,6 +106,13 @@ class Bot
       def send_plaintext(body, status=200)
         @res.status = status
         @res['Content-Type'] = 'text/plain'
+        @res.body = body
+      end
+
+      # Sends a json response
+      def send_json(body, status=200)
+        @res.status = status
+        @res['Content-Type'] = 'application/json'
         @res.body = body
       end
     end
@@ -198,8 +244,8 @@ class Bot
             if m.bot.auth.permit?(m.source || Auth::defaultbotuser, auth, '?')
               debug "template match found and auth'd: #{action.inspect} #{params.inspect}"
               response = botmodule.send(action, m, params)
-              if m.res.sent_size == 0
-                m.send_plaintext(response.to_json)
+              if m.res.sent_size == 0 and m.res.body.empty?
+                m.send_json(response.to_json)
               end
               return true
             end
@@ -430,7 +476,7 @@ class WebServiceModule < CoreBotModule
       return
     end
 
-    command = m.post['command'][0]
+    command = m.post['command']
     if not m.source
       botuser = Auth::defaultbotuser
     else
@@ -438,12 +484,18 @@ class WebServiceModule < CoreBotModule
     end
     netmask = '%s!%s@%s' % [botuser.username, botuser.username, m.client]
 
+    debug 'dispatch command: ' + command
+
     user = WebServiceUser.new(netmask, botuser)
     message = Irc::PrivMessage.new(@bot, nil, user, @bot.myself, command)
 
     res = @bot.plugins.irc_delegate('privmsg', message)
 
-    { :reply => user.response }
+    if m.req['Accept'] == 'application/json'
+      { :reply => user.response }
+    else
+      m.send_plaintext(user.response.join("\n") + "\n")
+    end
   end
 
 end
