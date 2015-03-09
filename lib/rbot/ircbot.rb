@@ -163,7 +163,7 @@ module Irc
 # Main bot class, which manages the various components, receives messages,
 # handles them or passes them to plugins, and contains core functionality.
 class Bot
-  COPYRIGHT_NOTICE = "(c) Tom Gilbert and the rbot development team"
+  COPYRIGHT_NOTICE = "(c) Giuseppe Bilotta and the rbot development team"
   SOURCE_URL = "http://ruby-rbot.org"
   # the bot's Auth data
   attr_reader :auth
