@@ -546,7 +546,7 @@ class Regexp
     RFC_CHAN = /#{CHAN_FIRST}#{CHAN_ANY}{1,49}|#{CHAN_SAFE}#{CHAN_ANY}{1,44}/
 
     # Nick-matching regexps
-    SPECIAL_CHAR = /[\x5b-\x60\x7b-\x7d]/
+    SPECIAL_CHAR = /[\[-\`\{-\}]/
     NICK_FIRST = /#{SPECIAL_CHAR}|[[:alpha:]]/
     NICK_ANY = /#{SPECIAL_CHAR}|[[:alnum:]]|-/
     GEN_NICK = /#{NICK_FIRST}#{NICK_ANY}+/
