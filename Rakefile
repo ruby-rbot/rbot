@@ -1,5 +1,5 @@
 require 'rake'
-require 'rake/gempackagetask'
+require 'rubygems/package_task'
 
 task :default => [:buildext]
 
@@ -15,7 +15,7 @@ SPECFILE = 'rbot.gemspec'
 # we must (and can) skip defining the gem packaging tasks.
 if File.exist? SPECFILE
   spec = eval(File.read(SPECFILE), nil, SPECFILE)
-  Rake::GemPackageTask.new(spec) do |pkg|
+  Gem::PackageTask.new(spec) do |pkg|
     pkg.need_zip = true
     pkg.need_tar = true
   end
