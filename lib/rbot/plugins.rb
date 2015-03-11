@@ -767,7 +767,7 @@ module Plugins
     def save(botmodule=nil)
       if botmodule
         botmodule.flush_registry
-        botmodule.save          
+        botmodule.save if botmodule.respond_to? 'save'
       else
         delegate 'flush_registry'
         delegate 'save'
