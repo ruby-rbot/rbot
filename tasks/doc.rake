@@ -2,7 +2,7 @@ desc "Generate RDoc"
 task :doc => ['doc:generate']
 
 namespace :doc do
-  project_root = File.expand_path(File.join(File.dirname(__FILE__), '.'))
+  project_root = File.expand_path(File.join(File.dirname(__FILE__), '..'))
   doc_destination = File.join(project_root, 'doc')
 
   begin
