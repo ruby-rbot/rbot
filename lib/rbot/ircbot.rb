@@ -1397,20 +1397,26 @@ class Bot
     end
   end
 
-  # call the save method for all of the botmodules
-  def save
+  # call the save method for all or the specified botmodule
+  #
+  # :botmodule ::
+  #   optional botmodule to save
+  def save(botmodule=nil)
     @save_mutex.synchronize do
-      @plugins.save
+      @plugins.save(botmodule)
     end
   end
 
-  # call the rescan method for all of the botmodules
-  def rescan
+  # call the rescan method for all or just the specified botmodule
+  #
+  # :botmodule ::
+  #   instance of the botmodule to rescan
+  def rescan(botmodule=nil)
     debug "\tstopping timer..."
     @timer.stop
     @save_mutex.synchronize do
-      @lang.rescan
-      @plugins.rescan
+      # @lang.rescan
+      @plugins.rescan(botmodule)
     end
     @timer.start
   end

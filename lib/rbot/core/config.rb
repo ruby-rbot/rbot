@@ -176,11 +176,27 @@ class ConfigModule < CoreBotModule
   end
 
   def bot_rescan(m, param)
-    m.reply _("saving ...")
-    @bot.save
-    m.reply _("rescanning ...")
-    @bot.rescan
-    m.reply _("done. %{plugin_status}") % {:plugin_status => @bot.plugins.status(true)}
+    if param[:botmodule]
+      name = param[:botmodule]
+      if not @bot.plugins.has_key? name
+        m.reply _("botmodule not found")
+        return # error
+      else
+        botmodule = @bot.plugins[name]
+        m.reply _("botmodule %s... saving... rescanning...") % [name]
+      end
+    else
+      m.reply _("saving... rescanning...")
+    end
+
+    @bot.rescan(botmodule)
+    m.reply _("done. %{plugin_status}") % {
+      :plugin_status => @bot.plugins.status(true)}
+    failure = @bot.plugins.botmodule_failure(name) if botmodule
+    if failure
+      m.reply _("plugin failed to load, %{failure}") % {
+        :failure => failure}
+    end
   end
 
   def bot_nick(m, param)
@@ -281,7 +297,7 @@ conf.map 'config search *rx',
 
 conf.map "save",
   :action => 'bot_save'
-conf.map "rescan",
+conf.map "rescan [:botmodule]",
   :action => 'bot_rescan'
 conf.map "nick :nick",
   :action => 'bot_nick'
