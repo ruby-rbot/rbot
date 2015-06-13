@@ -263,11 +263,13 @@ class ConfigModule < CoreBotModule
     when "save"
       _("save => save current dynamic data and configuration")
     when "rescan"
-      _("rescan => reload modules and static facts")
+      _("rescan [<botmodule>] => reload specified or all botmodules and static facts")
+    when "reload"
+      _("reload [<botmodule>] => reload specified or all botmodules and static facts")
     when "version"
       _("version => describes software version")
     else
-      _("config-related tasks: config, save, rescan, version, nick, status")
+      _("config-related tasks: config, save, rescan(/reload), version, nick, status")
     end
   end
 
@@ -298,6 +300,8 @@ conf.map 'config search *rx',
 conf.map "save",
   :action => 'bot_save'
 conf.map "rescan [:botmodule]",
+  :action => 'bot_rescan'
+conf.map "reload [:botmodule]",
   :action => 'bot_rescan'
 conf.map "nick :nick",
   :action => 'bot_nick'
