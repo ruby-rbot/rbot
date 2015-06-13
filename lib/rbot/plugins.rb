@@ -4,6 +4,7 @@
 # :title: rbot plugin management
 
 require 'singleton'
+require_relative './core/utils/where_is.rb'
 
 module Irc
 class Bot
@@ -603,17 +604,6 @@ module Plugins
         debug "loading #{desc}#{fname}"
         plugin_module.module_eval(plugin_string, fname)
 
-        # this sets a BOTMODULE_FNAME constant in all BotModule
-        # classes defined in the module. This allows us to know
-        # the filename the plugin was declared in from outside
-        # the plugin itself (from within, a __FILE__ would work.)
-        plugin_module.constants.each do |const|
-          cls = plugin_module.const_get(const)
-          if cls.is_a? Class and cls < BotModule
-            cls.const_set("BOTMODULE_FNAME", fname)
-          end
-        end
-
         return :loaded
       rescue Exception => err
         # rescue TimeoutError, StandardError, NameError, LoadError, SyntaxError => err
@@ -800,7 +790,7 @@ module Plugins
       if botmodule
         @failed.clear
         @ignored.clear
-        filename = botmodule.class::BOTMODULE_FNAME
+        filename = where_is(botmodule.class)
         err = load_botmodule_file(filename, "plugin")
         if err.is_a? Exception
           @failed << { :name => botmodule.to_s,
