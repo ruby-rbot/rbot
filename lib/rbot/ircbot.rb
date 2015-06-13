@@ -7,6 +7,7 @@
 require 'thread'
 
 require 'etc'
+require 'date'
 require 'fileutils'
 require 'logger'
 
@@ -18,6 +19,7 @@ $logger = Logger.new($stderr)
 $logger.datetime_format = $dateformat
 $logger.level = $cl_loglevel if defined? $cl_loglevel
 $logger.level = 0 if $debug
+$logger_stderr = $logger
 
 $log_queue = Queue.new
 $log_thread = nil
@@ -56,19 +58,16 @@ def rawlog(level, message=nil, who_pos=1)
   # messages originating at the same time, we blank #{who} after the first message
   # is output.
   # Also, we output strings as-is but for other objects we use pretty_inspect
-  case message
-  when String
-    str = message
-  else
-    str = message.pretty_inspect rescue '?'
-  end
+  message = message.kind_of?(String) ? message : (message.pretty_inspect rescue '?')
   qmsg = Array.new
-  str.each_line { |l|
+  message.each_line { |l|
     qmsg.push [level, l.chomp, who]
     who = ' ' * who.size
   }
-  if level == Logger::Severity::ERROR or level == Logger::Severity::FATAL and not $daemonize
-    $stderr.puts str
+  if level >= Logger::Severity::ERROR and not $daemonize
+    qmsg.each do |l|
+      $logger_stderr.add(*l)
+    end
   end
   $log_queue.push qmsg
 end
