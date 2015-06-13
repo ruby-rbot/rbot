@@ -131,7 +131,7 @@ module Irc
       if self == other
         return true
       else
-        warn "Casemap mismatch (#{self.inspect} != #{other.inspect})"
+        warning "Casemap mismatch (#{self.inspect} != #{other.inspect})"
         return false
       end
     end
@@ -196,6 +196,7 @@ module Irc
           @casemap = nil
         end
       else
+        warning 'casemap fallback to rfc1459 without hints, correct?'
         @casemap = (@casemap || 'rfc1459').to_irc_casemap
       end
     end
@@ -639,6 +640,12 @@ module Irc
     def initialize(str="", opts={})
       # First of all, check for server/casemap option
       #
+      warning 'new netmask "%s" casemap=%s server=%s server#casemap=%s' % [
+        str,
+        (opts[:casemap].class.to_s rescue 'null'),
+        (opts[:server].hostname.to_s rescue 'null'),
+        (opts[:server].casemap.class.to_s rescue 'null')
+      ]
       init_server_or_casemap(opts)
 
       # Now we can see if the given string _str_ is an actual Netmask
@@ -833,7 +840,7 @@ module Irc
         them = cmp.send(component).irc_downcase(casemap)
         if us.has_irc_glob? && them.has_irc_glob?
           next if us == them
-          warn NotImplementedError
+          warning NotImplementedError
           return false
         end
         return false if us.has_irc_glob? && !them.has_irc_glob?
@@ -1380,7 +1387,7 @@ module Irc
     def add_user(user, opts={})
       silent = opts.fetch(:silent, false)
       if has_user?(user)
-        warn "Trying to add user #{user} to channel #{self} again" unless silent
+        warning "Trying to add user #{user} to channel #{self} again" unless silent
       else
         @users << user.to_irc_user(server_and_casemap)
       end
@@ -1394,7 +1401,7 @@ module Irc
     #
     def initialize(name, topic=nil, users=[], opts={})
       raise ArgumentError, "Channel name cannot be empty" if name.to_s.empty?
-      warn "Unknown channel prefix #{name[0,1]}" if name !~ /^[&#+!]/
+      warning "Unknown channel prefix #{name[0,1]}" if name !~ /^[&#+!]/
       raise ArgumentError, "Invalid character in #{name.inspect}" if name =~ /[ \x07,]/
 
       init_server_or_casemap(opts)
@@ -1657,7 +1664,7 @@ module Irc
       if val
         yield if block_given?
       else
-        warn "No #{key.to_s.upcase} value"
+        warning "No #{key.to_s.upcase} value"
       end
     end
 
@@ -1665,7 +1672,7 @@ module Irc
       if val == true or val == false or val.nil?
         yield if block_given?
       else
-        warn "No #{key.to_s.upcase} value must be specified, got #{val}"
+        warning "No #{key.to_s.upcase} value must be specified, got #{val}"
       end
     end
     private :noval_warn, :val_warn
@@ -1706,7 +1713,8 @@ module Irc
               k, v = g.split(':')
               @supports[key][k] = v.to_i || 0
               if @supports[key][k] == 0
-                warn "Deleting #{key} limit of 0 for #{k}"
+                # If no argument is given for a particular command (e.g. "WHOIS:"),
+                #  that command does not have a limit on the number of targets.)
                 @supports[key].delete(k)
               end
             }
@@ -1852,8 +1860,8 @@ module Irc
         #
         # FIXME might need to raise an exception
         #
-        warn "#{self} doesn't support channel prefix #{prefix}" unless @supports[:chantypes].include?(prefix)
-        warn "#{self} doesn't support channel names this long (#{name.length} > #{@supports[:channellen]})" unless name.length <= @supports[:channellen]
+        warning "#{self} doesn't support channel prefix #{prefix}" unless @supports[:chantypes].include?(prefix)
+        warning "#{self} doesn't support channel names this long (#{name.length} > #{@supports[:channellen]})" unless name.length <= @supports[:channellen]
 
         # Next, we check if we hit the limit for channels of type +prefix+
         # if the server supports +chanlimit+
@@ -1865,7 +1873,7 @@ module Irc
             count += 1 if k.include?(n[0])
           }
           # raise IndexError, "Already joined #{count} channels with prefix #{k}" if count == @supports[:chanlimit][k]
-          warn "Already joined #{count}/#{@supports[:chanlimit][k]} channels with prefix #{k}, we may be going over server limits" if count >= @supports[:chanlimit][k]
+          warning "Already joined #{count}/#{@supports[:chanlimit][k]} channels with prefix #{k}, we may be going over server limits" if count >= @supports[:chanlimit][k]
         }
 
         # So far, everything is fine. Now create the actual Channel
@@ -1970,7 +1978,7 @@ module Irc
         end
         return old
       else
-        warn "#{self} doesn't support nicknames this long (#{tmp.nick.length} > #{@supports[:nicklen]})" unless tmp.nick.length <= @supports[:nicklen]
+        warning "#{self} doesn't support nicknames this long (#{tmp.nick.length} > #{@supports[:nicklen]})" unless tmp.nick.length <= @supports[:nicklen]
         @users << tmp
         return @users.last
       end
