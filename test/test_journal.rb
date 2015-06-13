@@ -160,7 +160,7 @@ class JournalBrokerTest < Test::Unit::TestCase
     journal = JournalBroker.new
 
     # subscribe to messages:
-    journal.subscribe(Query.define { topic 'foo' }) do |message|
+    sub = journal.subscribe(Query.define { topic 'foo' }) do |message|
       received << message
     end
 
@@ -172,6 +172,15 @@ class JournalBrokerTest < Test::Unit::TestCase
     # wait for messages to be consumed:
     sleep 0.1
     assert_equal(2, received.length)
+
+    received.clear
+
+    journal.publish 'foo', {}
+    sleep 0.1
+    sub.cancel
+    journal.publish 'foo', {}
+    sleep 0.1
+    assert_equal(1, received.length)
   end
 
 end
