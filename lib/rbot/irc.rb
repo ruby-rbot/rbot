@@ -640,7 +640,7 @@ module Irc
     def initialize(str="", opts={})
       # First of all, check for server/casemap option
       #
-      warning 'new netmask "%s" casemap=%s server=%s server#casemap=%s' % [
+      debug 'new netmask "%s" casemap=%s server=%s server#casemap=%s' % [
         str,
         (opts[:casemap].class.to_s rescue 'null'),
         (opts[:server].hostname.to_s rescue 'null'),
