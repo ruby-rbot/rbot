@@ -64,7 +64,7 @@ def rawlog(level, message=nil, who_pos=1)
     qmsg.push [level, l.chomp, who]
     who = ' ' * who.size
   }
-  if level >= Logger::Severity::ERROR and not $daemonize
+  if level >= Logger::Severity::WARN and not $daemonize
     qmsg.each do |l|
       $logger_stderr.add(*l)
     end
