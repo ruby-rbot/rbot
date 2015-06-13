@@ -17,6 +17,10 @@ define_structure :Command, :code, :nick, :created, :channel
 
 class ScriptPlugin < Plugin
 
+  Config.register Config::IntegerValue.new('script.safe',
+    :default => 3,
+    :desc => 'configure $SAFE level for scripts (3=safe/tainted, 0=unsafe/ruby default)')
+
   def initialize
     super
     if @registry.has_key?(:commands)
@@ -68,8 +72,7 @@ class ScriptPlugin < Plugin
       user = args.empty? ? m.sourcenick : args.first
 
       Thread.start {
-        # TODO allow different safe levels for different botusers
-        $SAFE = 3
+        $SAFE = @bot.config['script.safe']
 
         begin
           eval( code )
@@ -105,7 +108,8 @@ class ScriptPlugin < Plugin
   def handle_eval( m, params )
     code = params[:code].to_s.dup.untaint
     Thread.start {
-      # TODO allow different safe levels for different botusers
+      $SAFE = @bot.config['script.safe']
+
       begin
         eval( code )
       rescue Exception => e
@@ -119,7 +123,8 @@ class ScriptPlugin < Plugin
   def handle_echo( m, params )
     code = params[:code].to_s.dup.untaint
     Thread.start {
-      # TODO allow different safe levels for different botusers
+      $SAFE = @bot.config['script.safe']
+
       begin
         m.reply eval( code ).to_s
       rescue Exception => e
