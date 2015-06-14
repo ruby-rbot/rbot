@@ -156,6 +156,7 @@ require 'rbot/registry'
 require 'rbot/plugins'
 require 'rbot/message'
 require 'rbot/language'
+require 'rbot/journal'
 
 module Irc
 
@@ -201,7 +202,11 @@ class Bot
   # loads and opens new registry databases, used by the plugins
   attr_accessor :registry_factory
 
+  # web service
   attr_accessor :webservice
+
+  # persistent message queue
+  attr_accessor :journal
 
   # server we are connected to
   # TODO multiserver
@@ -544,6 +549,8 @@ class Bot
     restart_logger(logger)
 
     log_session_start
+
+    @journal = Journal::JournalBroker.new(bot: self)
 
     if $daemonize
       log "Redirecting standard input/output/error"

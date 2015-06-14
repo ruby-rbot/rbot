@@ -125,8 +125,8 @@ module Journal
       end
     end
 
-    def create(name, uri)
-      log 'load journal storage adapter: ' + name
+    def self.create(name, uri)
+      warning 'load journal storage adapter: ' + name
       load File.join(File.dirname(__FILE__), 'journal', name + '.rb')
       cls = AbstractStorage.get_impl.first
       cls.new(uri: uri)
@@ -285,12 +285,16 @@ module Journal
     def initialize(opts={})
       # overrides the internal consumer with a block
       @consumer = opts[:consumer]
+      @bot = opts[:bot]
       # storage backend
       if @bot
         @storage = opts[:storage] || Storage.create(
             @bot.config['journal.storage'], @bot.config['journal.storage.uri'])
       else
         @storage = opts[:storage]
+      end
+      unless @storage
+        warning 'journal broker: no storage set up, won\'t persist messages'
       end
       @queue = Queue.new
       # consumer thread:

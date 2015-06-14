@@ -22,6 +22,7 @@ module Journal
       def initialize(opts={})
         @uri = opts[:uri] || 'postgresql://localhost/rbot_journal'
         @conn = PG.connect(@uri)
+        @conn.exec('set client_min_messages = warning')
         @version = @conn.exec('SHOW server_version;')[0]['server_version']
 
         @version.gsub!(/^(\d+\.\d+)$/, '\1.0')
