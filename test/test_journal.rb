@@ -3,6 +3,7 @@ $:.unshift File.join(File.dirname(__FILE__), '../lib')
 require 'test/unit'
 require 'rbot/ircbot'
 require 'rbot/journal'
+require 'rbot/journal/postgres.rb'
 
 class JournalMessageTest < Test::Unit::TestCase
 
@@ -181,6 +182,18 @@ class JournalBrokerTest < Test::Unit::TestCase
     journal.publish 'foo', {}
     sleep 0.1
     assert_equal(1, received.length)
+  end
+
+end
+
+class JournalStorageTest < Test::Unit::TestCase
+
+  include Irc::Bot::Journal
+
+  def test_storage
+    s = Storage::PostgresStorage.new(
+      uri: 'postgresql://apoc:seed42@localhost/rbot_journal')
+    assert_equal(true, true)
   end
 
 end

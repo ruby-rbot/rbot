@@ -22,9 +22,20 @@ module Journal
 
 =end
 
+  Config.register Config::StringValue.new('journal.storage',
+    :default => nil,
+    :requires_restart => true,
+    :desc => 'storage engine used by the journal')
+  Config.register Config::StringValue.new('journal.storage.uri',
+    :default => nil,
+    :requires_restart => true,
+    :desc => 'storage database uri')
+
   class InvalidJournalMessage < StandardError
   end
   class ConsumeInterrupt < StandardError
+  end
+  class StorageError < StandardError
   end
 
   class JournalMessage
@@ -71,6 +82,34 @@ module Journal
         topic: topic,
         payload: payload
       )
+    end
+  end
+
+  module Storage
+    class AbstractStorage
+      # intializes/opens a new storage connection
+      def initialize(opts={})
+      end
+
+      # inserts a message in storage
+      def insert(message)
+      end
+
+      # creates/ensures a index exists on the payload specified by key
+      def ensure_index(key)
+      end
+
+      # returns a array of message instances that match the query
+      def find(query, limit=10, offset=0)
+      end
+
+      # returns the number of messages that match the query
+      def count(query)
+      end
+
+      # delete messages that match the query
+      def delete(query)
+      end
     end
   end
 
@@ -226,6 +265,8 @@ module Journal
     def initialize(opts={})
       # overrides the internal consumer with a block
       @consumer = opts[:consumer]
+      # storage backend
+      @storage = opts[:storage]
       @queue = Queue.new
       # consumer thread:
       @thread = Thread.new do
@@ -257,6 +298,12 @@ module Journal
           s.block.call(message)
         end
       end
+
+      @storage.insert(message) if @storage
+    end
+
+    def persists?
+      true if @storage
     end
 
     def join
