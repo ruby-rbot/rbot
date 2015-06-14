@@ -53,9 +53,14 @@ module Journal
           [m.id, m.topic, m.timestamp, JSON.generate(m.payload)])
       end
 
-      def find(query, limit=100, offset=0)
-        sql, params = query_to_sql(query)
-        sql = 'SELECT * FROM journal WHERE ' + sql + ' LIMIT %d OFFSET %d' % [limit.to_i, offset.to_i]
+      def find(query=nil, limit=100, offset=0)
+        if query
+          sql, params = query_to_sql(query)
+          sql = 'SELECT * FROM journal WHERE ' + sql + ' LIMIT %d OFFSET %d' % [limit.to_i, offset.to_i]
+        else
+          sql = 'SELECT * FROM journal LIMIT %d OFFSET %d' % [limit.to_i, offset.to_i]
+          params = []
+        end
         res = @conn.exec_params(sql, params)
         res.map do |row|
           timestamp = DateTime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S%z')
@@ -65,11 +70,27 @@ module Journal
       end
 
       # returns the number of messages that match the query
-      def count(query)
-        sql, params = query_to_sql(query)
-        sql = 'SELECT COUNT(*) FROM journal WHERE ' + sql
+      def count(query=nil)
+        if query
+          sql, params = query_to_sql(query)
+          sql = 'SELECT COUNT(*) FROM journal WHERE ' + sql
+        else
+          sql = 'SELECT COUNT(*) FROM journal'
+          params = []
+        end
         res = @conn.exec_params(sql, params)
         res[0]['count'].to_i
+      end
+
+      def remove(query=nil)
+        if query
+          sql, params = query_to_sql(query)
+          sql = 'DELETE FROM journal WHERE ' + sql
+        else
+          sql = 'DELETE FROM journal;'
+          params = []
+        end
+        res = @conn.exec_params(sql, params)
       end
 
       def drop

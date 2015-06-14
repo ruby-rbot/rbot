@@ -76,7 +76,7 @@ module Journal
     end
 
     def ==(other)
-      @id == other.id
+      (@id == other.id) rescue false
     end
 
     def self.create(topic, payload, opt={})
@@ -104,16 +104,32 @@ module Journal
       end
 
       # returns a array of message instances that match the query
-      def find(query, limit=10, offset=0)
+      def find(query=nil, limit=100, offset=0)
       end
 
       # returns the number of messages that match the query
-      def count(query)
+      def count(query=nil)
       end
 
-      # delete messages that match the query
-      def delete(query)
+      # remove messages that match the query
+      def remove(query=nil)
       end
+
+      # destroy the underlying table/collection
+      def drop
+      end
+
+      # Returns all classes from the namespace that implement this interface
+      def self.get_impl
+        ObjectSpace.each_object(Class).select { |klass| klass < self }
+      end
+    end
+
+    def create(name, uri)
+      log 'load journal storage adapter: ' + name
+      load File.join(File.dirname(__FILE__), 'journal', name + '.rb')
+      cls = AbstractStorage.get_impl.first
+      cls.new(uri: uri)
     end
   end
 
@@ -270,7 +286,12 @@ module Journal
       # overrides the internal consumer with a block
       @consumer = opts[:consumer]
       # storage backend
-      @storage = opts[:storage]
+      if @bot
+        @storage = opts[:storage] || Storage.create(
+            @bot.config['journal.storage'], @bot.config['journal.storage.uri'])
+      else
+        @storage = opts[:storage]
+      end
       @queue = Queue.new
       # consumer thread:
       @thread = Thread.new do
@@ -332,6 +353,17 @@ module Journal
 
     def unsubscribe(subscription)
       @subscriptions.delete subscription
+    end
+
+    def find(query, limit=100, offset=0, &block)
+      if block_given?
+        begin
+          res = @storage.find(query, limit, offset)
+          block.call(res)
+        end until res.length > 0
+      else
+        @storage.find(query, limit, offset)
+      end
     end
 
   end

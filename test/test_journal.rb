@@ -224,41 +224,68 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
     assert_equal(['foo.%.bar'], @storage.query_to_sql(q)[1])
   end
 
-  def test_insert
-    # the test message to persist
+  def test_operations
+    # insertion
     m = JournalMessage.create('log.core', {foo: {bar: 'baz'}})
-    # insert the test message:
     @storage.insert(m)
 
-    # find the test message by query:
-    q = Query.define do
-      topic 'log.core'
-    end
-    res = @storage.find(q)
-    _m = res.first
-    assert_equal(m, _m) # this only checks id
+    # query by id
+    res = @storage.find(Query.define { id m.id })
+    assert_equal(1, res.length)
+    assert_equal(m, res.first)
+
+    # check timestamp was returned correctly:
     assert_equal(m.timestamp.strftime('%Y-%m-%d %H:%M:%S%z'),
-                 _m.timestamp.strftime('%Y-%m-%d %H:%M:%S%z'))
-    assert_equal('log.core', _m.topic)
-    assert_equal({'foo' => {'bar' => 'baz'}}, _m.payload)
-    assert_equal(1, @storage.count(q))
+                 res.first.timestamp.strftime('%Y-%m-%d %H:%M:%S%z'))
+
+    # check if payload was returned correctly:
+    assert_equal({'foo' => {'bar' => 'baz'}}, res.first.payload)
+
+    # query by topic
+    assert_equal(m, @storage.find(Query.define { topic('log.core') }).first)
+    assert_equal(m, @storage.find(Query.define { topic('log.*') }).first)
+    assert_equal(m, @storage.find(Query.define { topic('*.*') }).first)
+
+    # query by timestamp range
+    assert_equal(1, @storage.find(Query.define {
+      timestamp(from: Time.now-DAY, to: Time.now+DAY) }).length)
+    assert_equal(0, @storage.find(Query.define {
+      timestamp(from: Time.now-DAY*2, to: Time.now-DAY) }).length)
+
+    # query by payload
+    res = @storage.find(Query.define { payload('foo.bar' => 'baz') })
+    assert_equal(m, res.first)
+    res = @storage.find(Query.define { payload('foo.bar' => 'x') })
+    assert_true(res.empty?)
+
+    # without arguments: find and count
+    assert_equal(1, @storage.count)
+    assert_equal(m, @storage.find.first)
   end
 
-  def test_query_range
-    timestamp = Time.now - DAY*7
-    m = JournalMessage.create('log.core', {foo: {bar: 'baz'}},
-                              timestamp: timestamp)
-    assert_equal(timestamp, m.timestamp)
+  def test_operations_multiple
+    # test operations on multiple messages
+    # insert a bunch:
+    @storage.insert(JournalMessage.create('test.topic', {name: 'one'}))
+    @storage.insert(JournalMessage.create('test.topic', {name: 'two'}))
+    @storage.insert(JournalMessage.create('test.topic', {name: 'three'}))
+    @storage.insert(JournalMessage.create('archived.topic', {name: 'four'},
+                                          timestamp: Time.now - DAY*100))
+    @storage.insert(JournalMessage.create('complex', {name: 'five', country: {
+      name: 'Italy'
+    }}))
+    @storage.insert(JournalMessage.create('complex', {name: 'six', country: {
+      name: 'Austria'
+    }}))
 
-    @storage.insert(m)
-    @storage.insert(JournalMessage.create('a.foo', {}))
-    @storage.insert(JournalMessage.create('b.bar', {}))
-    @storage.insert(JournalMessage.create('b.baz', {}))
 
-    r = @storage.find(Query.define { timestamp(from: timestamp-DAY, to: timestamp+DAY) })
+  end
 
-    assert_equal(1, r.length)
-    assert_equal(m, r.first)
+  def test_journal
+    received = []
+    # this journal persists messages in the test storage:
+    journal = JournalBroker.new(storage: @storage)
+
 
   end
 
