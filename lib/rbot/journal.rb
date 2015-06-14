@@ -355,7 +355,7 @@ module Journal
       @subscriptions.delete subscription
     end
 
-    def find(query, limit=100, offset=0, &block)
+    def find(query=nil, limit=100, offset=0, &block)
       if block_given?
         begin
           res = @storage.find(query, limit, offset)
@@ -364,6 +364,14 @@ module Journal
       else
         @storage.find(query, limit, offset)
       end
+    end
+
+    def count(query=nil)
+      @storage.count(query)
+    end
+
+    def remove(query=nil)
+      @storage.remove(query)
     end
 
   end

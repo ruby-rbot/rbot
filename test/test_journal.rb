@@ -270,7 +270,7 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
     @storage.insert(JournalMessage.create('test.topic', {name: 'two'}))
     @storage.insert(JournalMessage.create('test.topic', {name: 'three'}))
     @storage.insert(JournalMessage.create('archived.topic', {name: 'four'},
-                                          timestamp: Time.now - DAY*100))
+      timestamp: Time.now - DAY*100))
     @storage.insert(JournalMessage.create('complex', {name: 'five', country: {
       name: 'Italy'
     }}))
@@ -278,15 +278,30 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
       name: 'Austria'
     }}))
 
+    # query by topic
+    assert_equal(3, @storage.find(Query.define { topic 'test.*' }).length)
+    # query by payload
+    assert_equal(1, @storage.find(Query.define {
+      payload('country.name' => 'Austria') }).length)
+    # query by timestamp range
+    assert_equal(1, @storage.find(Query.define {
+      timestamp(from: Time.now - DAY*150, to: Time.now - DAY*50) }).length)
 
+    # count with query
+    assert_equal(2, @storage.count(Query.define { topic('complex') }))
+    assert_equal(6, @storage.count)
+    @storage.remove(Query.define { topic('archived.*') })
+    assert_equal(5, @storage.count)
+    @storage.remove
+    assert_equal(0, @storage.count)
   end
 
   def test_journal
-    received = []
     # this journal persists messages in the test storage:
     journal = JournalBroker.new(storage: @storage)
-
-
+    journal.publish 'log.irc', action: 'message'
+    sleep 0.1
+    assert_equal(1, journal.count)
   end
 
 end
