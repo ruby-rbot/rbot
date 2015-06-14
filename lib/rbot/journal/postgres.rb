@@ -11,9 +11,6 @@ module Irc
 class Bot
 module Journal
 
-  class Query
-  end
-
   module Storage
 
     class PostgresStorage < AbstractStorage

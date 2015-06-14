@@ -126,7 +126,7 @@ module Journal
     end
 
     def self.create(name, uri)
-      warning 'load journal storage adapter: ' + name
+      log 'load journal storage adapter: ' + name
       load File.join(File.dirname(__FILE__), 'journal', name + '.rb')
       cls = AbstractStorage.get_impl.first
       cls.new(uri: uri)
