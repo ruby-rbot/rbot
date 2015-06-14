@@ -75,10 +75,14 @@ module Journal
       end
     end
 
-    def self.create(topic, payload)
+    def ==(other)
+      @id == other.id
+    end
+
+    def self.create(topic, payload, opt={})
       JournalMessage.new(
-        id: SecureRandom.uuid,
-        timestamp: Time.now,
+        id: opt[:id] || SecureRandom.uuid,
+        timestamp: opt[:timestamp] || Time.now,
         topic: topic,
         payload: payload
       )
