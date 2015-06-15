@@ -4,6 +4,9 @@ require 'test/unit'
 require 'rbot/ircbot'
 require 'rbot/journal'
 require 'rbot/journal/postgres.rb'
+require 'rbot/journal/mongo.rb'
+
+require 'benchmark'
 
 DAY=60*60*24
 
@@ -186,47 +189,17 @@ class JournalBrokerTest < Test::Unit::TestCase
 
 end
 
-class JournalStoragePostgresTest < Test::Unit::TestCase
+module JournalStorageTestMixin
 
   include Irc::Bot::Journal
-
-  def setup
-    @storage = Storage::PostgresStorage.new(
-      uri: ENV['DB_URI'] || 'postgresql://localhost/rbot_journal',
-      drop: true)
-  end
 
   def teardown
     @storage.drop
   end
 
-  def test_query_to_sql
-    q = Query.define do
-      id 'foo'
-      id 'bar', 'baz'
-      topic 'log.irc.*'
-      topic 'log.core', 'baz'
-      timestamp from: Time.now, to: Time.now + 60 * 10
-      payload 'action': :privmsg, 'alice': 'bob'
-      payload 'channel': '#rbot'
-      payload 'foo.bar': 'baz'
-    end
-    sql = @storage.query_to_sql(q)
-    assert_equal("(id = $1 OR id = $2 OR id = $3) AND (topic ILIKE $4 OR topic ILIKE $5 OR topic ILIKE $6) AND (timestamp >= $7 AND timestamp <= $8) AND (payload->>'action' = $9 OR payload->>'alice' = $10 OR payload->>'channel' = $11 OR payload->'foo'->>'bar' = $12)", sql[0])
-    q = Query.define do
-      id 'foo'
-    end
-    assert_equal('(id = $1)', @storage.query_to_sql(q)[0])
-    q = Query.define do
-      topic 'foo.*.bar'
-    end
-    assert_equal('(topic ILIKE $1)', @storage.query_to_sql(q)[0])
-    assert_equal(['foo.%.bar'], @storage.query_to_sql(q)[1])
-  end
-
   def test_operations
     # insertion
-    m = JournalMessage.create('log.core', {foo: {bar: 'baz'}})
+    m = JournalMessage.create('log.core', {foo: {bar: 'baz', qux: 42}})
     @storage.insert(m)
 
     # query by id
@@ -239,7 +212,7 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
                  res.first.timestamp.strftime('%Y-%m-%d %H:%M:%S%z'))
 
     # check if payload was returned correctly:
-    assert_equal({'foo' => {'bar' => 'baz'}}, res.first.payload)
+    assert_equal({'foo' => {'bar' => 'baz', 'qux' => 42}}, res.first.payload)
 
     # query by topic
     assert_equal(m, @storage.find(Query.define { topic('log.core') }).first)
@@ -302,6 +275,97 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
     journal.publish 'log.irc', action: 'message'
     sleep 0.1
     assert_equal(1, journal.count)
+  end
+
+  NUM=150_000
+  def test_benchmark
+    puts
+
+    assert_equal(0, @storage.count)
+    # prepare messages to insert, we benchmark the storage backend not ruby
+    num = 0
+    messages = (0...NUM).map do
+      num += 1
+      JournalMessage.create(
+            'test.topic.num_'+num.to_s, {answer: {number: '42', word: 'forty-two'}})
+    end
+
+    # iter is the number of operations performed WITHIN block
+    def benchmark(label, iter, &block)
+      time = Benchmark.realtime do
+        yield
+      end
+      puts label + ' %d iterations, duration: %.3fms (%.3fms / iteration)' % [iter, time*1000, (time*1000) / iter]
+    end
+
+    benchmark(@storage.class.to_s+'~insert', messages.length) do
+      messages.each { |m|
+        @storage.insert(m)
+      }
+    end
+
+    benchmark(@storage.class.to_s+'~find_by_id', messages.length) do
+      messages.each { |m|
+        @storage.find(Query.define { id m.id })
+      }
+    end
+    benchmark(@storage.class.to_s+'~find_by_topic', messages.length) do
+      messages.each { |m|
+        @storage.find(Query.define { topic m.topic })
+      }
+    end
+    benchmark(@storage.class.to_s+'~find_by_topic_wildcard', messages.length) do
+      messages.each { |m|
+        @storage.find(Query.define { topic m.topic.gsub('topic', '*') })
+      }
+    end
+  end
+
+end
+
+class JournalStoragePostgresTest < Test::Unit::TestCase
+
+  include JournalStorageTestMixin
+
+  def setup
+    @storage = Storage::PostgresStorage.new(
+      uri: ENV['DB_URI'] || 'postgresql://localhost/rbot_journal',
+      drop: true)
+  end
+
+  def test_query_to_sql
+    q = Query.define do
+      id 'foo'
+      id 'bar', 'baz'
+      topic 'log.irc.*'
+      topic 'log.core', 'baz'
+      timestamp from: Time.now, to: Time.now + 60 * 10
+      payload 'action': :privmsg, 'alice': 'bob'
+      payload 'channel': '#rbot'
+      payload 'foo.bar': 'baz'
+    end
+    sql = @storage.query_to_sql(q)
+    assert_equal("(id = $1 OR id = $2 OR id = $3) AND (topic ILIKE $4 OR topic ILIKE $5 OR topic ILIKE $6) AND (timestamp >= $7 AND timestamp <= $8) AND (payload->>'action' = $9 OR payload->>'alice' = $10 OR payload->>'channel' = $11 OR payload->'foo'->>'bar' = $12)", sql[0])
+    q = Query.define do
+      id 'foo'
+    end
+    assert_equal('(id = $1)', @storage.query_to_sql(q)[0])
+    q = Query.define do
+      topic 'foo.*.bar'
+    end
+    assert_equal('(topic ILIKE $1)', @storage.query_to_sql(q)[0])
+    assert_equal(['foo.%.bar'], @storage.query_to_sql(q)[1])
+  end
+
+end
+
+class JournalStorageMongoTest < Test::Unit::TestCase
+
+  include JournalStorageTestMixin
+
+  def setup
+    @storage = Storage::MongoStorage.new(
+      drop: true)
   end
 
 end
