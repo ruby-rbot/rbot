@@ -59,6 +59,7 @@ module Journal
         drop if opts[:drop]
         create_table
         create_index('topic_index', 'topic')
+        create_index('timestamp_index', 'timestamp')
       end
 
       def create_table
@@ -92,7 +93,13 @@ module Journal
           [m.id, m.topic, m.timestamp, JSON.generate(m.payload)])
       end
 
-      def find(query=nil, limit=100, offset=0)
+      def find(query=nil, limit=100, offset=0, &block)
+        def to_message(row)
+          timestamp = DateTime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S%z')
+          JournalMessage.new(id: row['id'], timestamp: timestamp,
+            topic: row['topic'], payload: JSON.parse(row['payload']))
+        end
+
         if query
           sql, params = query_to_sql(query)
           sql = 'SELECT * FROM journal WHERE ' + sql + ' LIMIT %d OFFSET %d' % [limit.to_i, offset.to_i]
@@ -101,10 +108,10 @@ module Journal
           params = []
         end
         res = @conn.exec_params(sql, params)
-        res.map do |row|
-          timestamp = DateTime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S%z')
-          JournalMessage.new(id: row['id'], timestamp: timestamp,
-            topic: row['topic'], payload: JSON.parse(row['payload']))
+        if block_given?
+          res.each { |row| block.call(to_message(row)) }
+        else
+          res.map { |row| to_message(row) }
         end
       end
 

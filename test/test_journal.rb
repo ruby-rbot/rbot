@@ -22,7 +22,9 @@ class JournalMessageTest < Test::Unit::TestCase
     end
     assert_nil(m.get('nope', nil))
     assert_nil(m.get('baz'))
-    assert_equal(23, m.get('qux.quxx'))
+    assert_equal(23, m['qux.quxx'])
+    assert_equal(nil, m['qux.nope'])
+    assert_raise(ArgumentError) { m.get('qux.nope') }
   end
 
 end
@@ -163,8 +165,8 @@ class JournalBrokerTest < Test::Unit::TestCase
     received = []
     journal = JournalBroker.new
 
-    # subscribe to messages:
-    sub = journal.subscribe(Query.define { topic 'foo' }) do |message|
+    # subscribe to messages for topic foo:
+    sub = journal.subscribe('foo') do |message|
       received << message
     end
 
@@ -236,6 +238,31 @@ module JournalStorageTestMixin
     assert_equal(m, @storage.find.first)
   end
 
+  def test_find
+    # tests limit/offset and block parameters of find()
+    @storage.insert(JournalMessage.create('irclogs', {message: 'foo'}))
+    @storage.insert(JournalMessage.create('irclogs', {message: 'bar'}))
+    @storage.insert(JournalMessage.create('irclogs', {message: 'baz'}))
+    @storage.insert(JournalMessage.create('irclogs', {message: 'qux'}))
+
+    msgs = []
+    @storage.find(Query.define({topic: 'irclogs'}), 2, 1) do |m|
+      msgs << m
+    end
+    assert_equal(2, msgs.length)
+    assert_equal('bar', msgs.first['message'])
+    assert_equal('baz', msgs.last['message'])
+
+    msgs = []
+    @storage.find(Query.define({topic: 'irclogs'})) do |m|
+      msgs << m
+    end
+    assert_equal(4, msgs.length)
+    assert_equal('foo', msgs.first['message'])
+    assert_equal('qux', msgs.last['message'])
+
+  end
+
   def test_operations_multiple
     # test operations on multiple messages
     # insert a bunch:
@@ -269,15 +296,27 @@ module JournalStorageTestMixin
     assert_equal(0, @storage.count)
   end
 
-  def test_journal
-    # this journal persists messages in the test storage:
-    journal = JournalBroker.new(storage: @storage)
-    journal.publish 'log.irc', action: 'message'
+  def test_broker_interface
+    journal = JournalBroker.new(storage: @storage) 
+
+    journal.publish 'irclogs', message: 'foo'
+    journal.publish 'irclogs', message: 'bar'
+    journal.publish 'irclogs', message: 'baz'
+    journal.publish 'irclogs', message: 'qux'
+
+    # wait for messages to be consumed:
     sleep 0.1
-    assert_equal(1, journal.count)
+
+    msgs = []
+    journal.find({topic: 'irclogs'}, 2, 1) do |m|
+      msgs << m
+    end
+    assert_equal(2, msgs.length)
+    assert_equal('bar', msgs.first['message'])
+    assert_equal('baz', msgs.last['message'])
   end
 
-  NUM=150_000
+  NUM=100 # 1_000_000
   def test_benchmark
     puts
 
@@ -323,13 +362,14 @@ module JournalStorageTestMixin
 
 end
 
+if ENV['PG_URI']
 class JournalStoragePostgresTest < Test::Unit::TestCase
 
   include JournalStorageTestMixin
 
   def setup
     @storage = Storage::PostgresStorage.new(
-      uri: ENV['DB_URI'] || 'postgresql://localhost/rbot_journal',
+      uri: ENV['PG_URI'] || 'postgresql://localhost/rbot_journal',
       drop: true)
   end
 
@@ -358,15 +398,22 @@ class JournalStoragePostgresTest < Test::Unit::TestCase
   end
 
 end
+else
+  puts 'NOTE: Set PG_URI environment variable to test postgresql storage.'
+end
 
+if ENV['MONGO_URI']
 class JournalStorageMongoTest < Test::Unit::TestCase
 
   include JournalStorageTestMixin
 
   def setup
     @storage = Storage::MongoStorage.new(
+      uri: ENV['MONGO_URI'] || 'mongodb://127.0.0.1:27017/rbot',
       drop: true)
   end
-
+end
+else
+  puts 'NOTE: Set MONGO_URI environment variable to test postgresql storage.'
 end
 

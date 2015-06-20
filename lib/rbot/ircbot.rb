@@ -156,7 +156,6 @@ require 'rbot/registry'
 require 'rbot/plugins'
 require 'rbot/message'
 require 'rbot/language'
-require 'rbot/journal'
 
 module Irc
 
@@ -205,9 +204,6 @@ class Bot
   # web service
   attr_accessor :webservice
 
-  # persistent message queue
-  attr_accessor :journal
-
   # server we are connected to
   # TODO multiserver
   def server
@@ -228,6 +224,13 @@ class Bot
   # bot channels in the client/server connection
   def channels
     myself.channels
+  end
+
+  # returns the journal
+  def journal
+    if @plugins['journal']
+      @plugins['journal'].broker
+    end
   end
 
   # nick wanted by the bot. This defaults to the irc.nick config value,
@@ -549,8 +552,6 @@ class Bot
     restart_logger(logger)
 
     log_session_start
-
-    @journal = Journal::JournalBroker.new(bot: self)
 
     if $daemonize
       log "Redirecting standard input/output/error"
