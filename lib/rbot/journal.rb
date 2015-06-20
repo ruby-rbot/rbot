@@ -344,6 +344,7 @@ module Journal
 
     def publish(topic, payload)
       @queue << JournalMessage::create(topic, payload)
+      nil
     end
 
     # Subscribe to receive messages from a topic.
@@ -401,10 +402,16 @@ module Journal
     end
 
     def count(query=nil)
+      unless query.is_a? Query
+        query = Query.define(query)
+      end
       @storage.count(query)
     end
 
     def remove(query=nil)
+      unless query.is_a? Query
+        query = Query.define(query)
+      end
       @storage.remove(query)
     end
 
