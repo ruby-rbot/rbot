@@ -77,6 +77,8 @@ module Journal
     end
 
     def self.create(topic, payload, opt={})
+      # cleanup payload to only contain strings
+      payload = payload.map { |k, v| [k.to_s, v.to_s] }.to_h
       JournalMessage.new(
         id: opt[:id] || SecureRandom.uuid,
         timestamp: opt[:timestamp] || Time.now,
