@@ -28,7 +28,13 @@ class JournalModule < CoreBotModule
     name = @bot.config['journal.storage']
     uri = @bot.config['journal.storage.uri']
     if name
-      storage = Storage.create(name, uri)
+      begin
+        storage = Storage.create(name, uri)
+      rescue
+        error 'journal storage initialization error!'
+        error $!
+        error $@.join("\n")
+      end
     end
     debug 'journal broker starting up...'
     @broker = JournalBroker.new(storage: storage)

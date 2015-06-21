@@ -345,6 +345,7 @@ module Journal
     end
 
     def publish(topic, payload)
+      debug 'journal publish message in %s: %s' % [topic, payload.inspect]
       @queue << JournalMessage::create(topic, payload)
       nil
     end

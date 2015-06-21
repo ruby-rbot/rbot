@@ -55,6 +55,7 @@ module Journal
         end
         @jsonb = (version >= 940)
         log 'journal storage: no jsonb support, consider upgrading postgres' unless @jsonb
+        log 'journal storage: postgres backend is using JSONB :)' if @jsonb
 
         drop if opts[:drop]
         create_table
