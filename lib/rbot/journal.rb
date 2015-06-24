@@ -278,6 +278,7 @@ module Journal
 
 
   class JournalBroker
+    attr_reader :storage
     class Subscription
       attr_reader :topic
       attr_reader :block

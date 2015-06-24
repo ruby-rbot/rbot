@@ -7,6 +7,17 @@
 
 require 'rbot/journal'
 
+module ::Irc
+class Bot
+  # this should return the journal if the managing plugin has been loaded.
+  def journal
+    if @plugins['journal']
+      @plugins['journal'].broker
+    end
+  end
+end
+end
+
 class JournalModule < CoreBotModule
 
   attr_reader :broker

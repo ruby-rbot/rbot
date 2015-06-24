@@ -226,13 +226,6 @@ class Bot
     myself.channels
   end
 
-  # returns the journal
-  def journal
-    if @plugins['journal']
-      @plugins['journal'].broker
-    end
-  end
-
   # nick wanted by the bot. This defaults to the irc.nick config value,
   # but may be overridden by a manual !nick command
   def wanted_nick
