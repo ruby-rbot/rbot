@@ -28,7 +28,7 @@ module Journal
         @collection.indexes.create_one({timestamp: 1})
       end
 
-      def ensure_index(key)
+      def ensure_payload_index(key)
         @collection.indexes.create_one({'payload.'+key => 1})
       end
 

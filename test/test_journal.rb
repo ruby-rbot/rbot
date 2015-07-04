@@ -314,6 +314,8 @@ module JournalStorageTestMixin
     assert_equal(2, msgs.length)
     assert_equal('bar', msgs.first['message'])
     assert_equal('baz', msgs.last['message'])
+
+    journal.ensure_payload_index('foo.bar.baz')
   end
 
   NUM=100 # 1_000_000

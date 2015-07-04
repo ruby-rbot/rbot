@@ -78,7 +78,6 @@ module Journal
 
     def self.create(topic, payload, opt={})
       # cleanup payload to only contain strings
-      payload = payload.map { |k, v| [k.to_s, v.to_s] }.to_h
       JournalMessage.new(
         id: opt[:id] || SecureRandom.uuid,
         timestamp: opt[:timestamp] || Time.now,
@@ -99,7 +98,7 @@ module Journal
       end
 
       # creates/ensures a index exists on the payload specified by key
-      def ensure_index(key)
+      def ensure_payload_index(key)
       end
 
       # returns a array of message instances that match the query
@@ -417,6 +416,10 @@ module Journal
         query = Query.define(query)
       end
       @storage.remove(query)
+    end
+
+    def ensure_payload_index(key)
+      @storage.ensure_payload_index(key)
     end
 
   end
