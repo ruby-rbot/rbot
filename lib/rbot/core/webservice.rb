@@ -17,6 +17,8 @@ require 'webrick/https'
 require 'openssl'
 require 'cgi'
 require 'json'
+require 'erb'
+require 'ostruct'
 
 module ::Irc
 class Bot
@@ -82,7 +84,10 @@ class Bot
         }
 
         @path = req.path
-        debug '@path = ' + @path.inspect
+
+        @load_path = [File.join(Config::datadir, 'web')]
+        @load_path += @bot.plugins.core_module_dirs
+        @load_path += @bot.plugins.plugin_dirs
       end
 
       def parse_query(query)
@@ -123,6 +128,27 @@ class Bot
       # Sends a html response
       def send_html(body, status=200)
         send_response(body, status, 'text/html')
+      end
+
+      # Expands a relative filename to absolute using a list of load paths.
+      def get_load_path(filename)
+        @load_path.each do |path|
+          file = File.join(path, filename) 
+          return file if File.exists?(file)
+        end
+      end
+
+      # Renders a erb template and responds it
+      def render(template, args={})
+        file = get_load_path template
+        if not file
+          raise 'template not found: ' + template
+        end
+
+        tmpl = ERB.new(IO.read(file))
+        ns = OpenStruct.new(args)
+        body = tmpl.result(ns.instance_eval { binding })
+        send_html(body, 200)
       end
     end
 
@@ -393,6 +419,10 @@ class WebServiceModule < CoreBotModule
     :default => '127.0.0.1',
     :requires_rescan => true,
     :desc => 'Host the web service will bind on')
+
+  Config.register Config::StringValue.new('webservice.url',
+    :default => 'http://127.0.0.1:7268',
+    :desc => 'The public URL of the web service.')
 
   Config.register Config::BooleanValue.new('webservice.ssl',
     :default => false,

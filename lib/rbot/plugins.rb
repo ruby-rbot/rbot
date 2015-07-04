@@ -410,6 +410,9 @@ module Plugins
     attr_reader :botmodules
     attr_reader :maps
 
+    attr_reader :core_module_dirs
+    attr_reader :plugin_dirs
+
     # This is the list of patterns commonly delegated to plugins.
     # A fast delegation lookup is enabled for them.
     DEFAULT_DELEGATE_PATTERNS = %r{^(?:
