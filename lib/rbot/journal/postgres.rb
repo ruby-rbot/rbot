@@ -7,6 +7,60 @@
 require 'pg'
 require 'json'
 
+# wraps the postgres driver in a single thread
+class PGWrapper
+  def initialize(uri)
+    @uri = uri
+    @queue = Queue.new
+    run_thread
+  end
+
+  def run_thread
+    Thread.new do
+      @conn = PG.connect(@uri)
+      while message = @queue.pop
+        return_queue = message.shift
+        begin
+          result = @conn.send(*message)
+          return_queue << [:result, result]
+        rescue Exception => e
+          return_queue << [:exception, e]
+        end
+      end
+      @conn.finish
+    end
+  end
+
+  def run_in_thread(*args)
+    rq = Queue.new
+    @queue << [rq, *args]
+    type, result = rq.pop
+    if type == :exception
+      raise result
+    else
+      result
+    end
+  end
+
+  public
+
+  def destroy
+    @queue << nil
+  end
+
+  def exec(query)
+    run_in_thread(:exec, query)
+  end
+
+  def exec_params(query, params)
+    run_in_thread(:exec_params, query, params)
+  end
+
+  def escape_string(string)
+    @conn.escape_string(string)
+  end
+end
+
 # as a replacement for CREATE INDEX IF NOT EXIST that is not in postgres.
 # define function to be able to create an index in case it doesnt exist:
 # source: http://stackoverflow.com/a/26012880
@@ -40,7 +94,7 @@ module Journal
 
       def initialize(opts={})
         @uri = opts[:uri] || 'postgresql://localhost/rbot'
-        @conn = PG.connect(@uri)
+        @conn = PGWrapper.new(@uri)
         @conn.exec('set client_min_messages = warning')
         @conn.exec(CREATE_INDEX)
         @version = @conn.exec('SHOW server_version;')[0]['server_version']
