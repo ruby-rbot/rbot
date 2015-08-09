@@ -391,7 +391,7 @@ class MarkovPlugin < Plugin
 
   def status(m,params)
     if @bot.config['markov.enabled']
-      reply = _("markov is currently enabled, %{p}% chance of chipping in") % { :p => probability? }
+      reply = _("markov is currently enabled, %{p}%% chance of chipping in") % { :p => probability? }
       l = @learning_queue.length
       reply << (_(", %{l} messages in queue") % {:l => l}) if l > 0
       l = @upgrade_queue.length
@@ -494,7 +494,7 @@ class MarkovPlugin < Plugin
       @bot.config['markov.probability'] = params[:probability].to_i
       m.okay
     else
-      m.reply _("markov has a %{prob}% chance of chipping in") % { :prob => probability? }
+      m.reply _("markov has a %{prob}%% chance of chipping in") % { :prob => probability? }
     end
   end
 
@@ -749,9 +749,10 @@ plugin.map 'markov enable', :action => "enable"
 plugin.map 'markov disable', :action => "disable"
 plugin.map 'markov status', :action => "status"
 plugin.map 'markov stats', :action => "stats"
-plugin.map 'chat about :seed1 [:seed2]', :action => "chat"
+plugin.map 'chat about :seed1 [:seed2]', :action => "chat", :defaults => {:seed2 => nil}
 plugin.map 'chat', :action => "rand_chat"
 plugin.map 'markov probability [:probability]', :action => "probability",
+           :defaults => {:probability => nil},
            :requirements => {:probability => /^\d+%?$/}
 plugin.map 'markov learn from :file [:testing [:lines lines]] [using pattern *pattern]', :action => "learn_from", :thread => true,
            :requirements => {
