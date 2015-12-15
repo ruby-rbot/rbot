@@ -387,7 +387,7 @@ class ExcusePlugin < Plugin
 "Dyslexics retyping hosts file on servers",
 "The Internet is being scanned for viruses.",
 "Your computer's union contract is set to expire at midnight.",
-"Bad user karma.",
+"Bad reputation.",
 "/dev/clue was linked to /dev/null",
 "Increased sunspot activity.",
 "We already sent around a notice about that.",

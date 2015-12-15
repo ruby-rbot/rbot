@@ -1,4 +1,4 @@
-class KarmaPlugin < Plugin
+class PointsPlugin < Plugin
   def initialize
     super
 
@@ -14,17 +14,17 @@ class KarmaPlugin < Plugin
     @registry.set_default(0)
 
     # import if old file format found
-    oldkarma = @bot.path 'karma.rbot'
-    if File.exist? oldkarma
-      log "importing old karma data"
-      IO.foreach(oldkarma) do |line|
+    oldpoints = @bot.path 'points.rbot'
+    if File.exist? oldpoints
+      log "importing old points data"
+      IO.foreach(oldpoints) do |line|
         if(line =~ /^(\S+)<=>([\d-]+)$/)
           item = $1
-          karma = $2.to_i
-          @registry[item] = karma
+          points = $2.to_i
+          @registry[item] = points
         end
       end
-      File.delete oldkarma
+      File.delete oldpoints
     end
   end
 
@@ -38,26 +38,26 @@ class KarmaPlugin < Plugin
     end
   end
 
-  def karma(m, params)
+  def points(m, params)
     thing = params[:key]
     thing = m.sourcenick unless thing
     thing = thing.to_s
-    karma = @registry[thing]
-    if(karma != 0)
-      m.reply "karma for #{thing}: #{@registry[thing]}"
+    points = @registry[thing]
+    if(points != 0)
+      m.reply "points for #{thing}: #{@registry[thing]}"
     else
-      m.reply "#{thing} has neutral karma"
+      m.reply "#{thing} has zero points"
     end
   end
 
-  def setkarma(m, params)
+  def setpoints(m, params)
     thing = (params[:key] || m.sourcenick).to_s
     @registry[thing] = params[:val].to_i
-    karma(m, params)
+    points(m, params)
   end
 
   def help(plugin, topic="")
-    "karma module: Listens to everyone's chat. <thing>++/<thing>-- => increase/decrease karma for <thing>, karma for <thing>? => show karma for <thing>, karmastats => show stats. Karma is a community rating system - only in-channel messages can affect karma and you cannot adjust your own."
+    "points module: Keeps track of internet points, infusing your pointless life with meaning. Listens to everyone's chat. <thing>++/<thing>-- => increase/decrease points for <thing>, points for <thing>? => show points for <thing>, pointstats => show stats. Points are a community rating system - only in-channel messages can affect points and you cannot adjust your own."
   end
 
   def message(m)
@@ -100,11 +100,11 @@ class KarmaPlugin < Plugin
   end
 end
 
-plugin = KarmaPlugin.new
+plugin = PointsPlugin.new
 
 plugin.default_auth( 'edit', false )
 
-plugin.map 'karmastats', :action => 'stats'
-plugin.map 'karma :key', :defaults => {:key => false}
-plugin.map 'setkarma :key :val', :defaults => {:key => false}, :requirements => {:val => /^-?\d+$/}, :auth_path => 'edit::set!'
-plugin.map 'karma for :key'
+plugin.map 'pointstats', :action => 'stats'
+plugin.map 'points :key', :defaults => {:key => false}
+plugin.map 'setpoints :key :val', :defaults => {:key => false}, :requirements => {:val => /^-?\d+$/}, :auth_path => 'edit::set!'
+plugin.map 'points for :key'
