@@ -30,11 +30,23 @@ class PointsPlugin < Plugin
 
   def stats(m, params)
     if (@registry.length)
-      max = @registry.values.max
-      min = @registry.values.min
-      best = @registry.to_hash.index(max)
-      worst = @registry.to_hash.index(min)
+      max = @registry.values.max || "zero"
+      min = @registry.values.min || "zero"
+      best = @registry.to_hash.key(max) || "nobody"
+      worst = @registry.to_hash.key(min) || "nobody"
       m.reply "#{@registry.length} items. Best: #{best} (#{max}); Worst: #{worst} (#{min})"
+    end
+  end
+
+  def dump(m, params)
+    if (@registry.length)
+      msg = "Points dump: "
+      msg << @registry.to_hash.sort_by { |k, v| v }.reverse.
+                       map { |k,v| "#{k}: #{v}" }.
+                       join(", ")
+      m.reply msg
+    else
+      m.reply "nobody has any points yet!"
     end
   end
 
@@ -57,7 +69,7 @@ class PointsPlugin < Plugin
   end
 
   def help(plugin, topic="")
-    "points module: Keeps track of internet points, infusing your pointless life with meaning. Listens to everyone's chat. <thing>++/<thing>-- => increase/decrease points for <thing>, points for <thing>? => show points for <thing>, pointstats => show stats. Points are a community rating system - only in-channel messages can affect points and you cannot adjust your own."
+    "points module: Keeps track of internet points, infusing your pointless life with meaning. Listens to everyone's chat. <thing>++/<thing>-- => increase/decrease points for <thing>, points for <thing>? => show points for <thing>, pointstats => show best/worst, pointsdump => show everyone's points. Points are a community rating system - only in-channel messages can affect points and you cannot adjust your own."
   end
 
   def message(m)
@@ -96,6 +108,7 @@ class PointsPlugin < Plugin
       next if v == 0
       @registry[k] += (v > 0 ? 1 : -1)
       m.reply @bot.lang.get("thanks") if k == @bot.nick && v > 0
+      m.reply "#{k} now has #{@registry[k]} points!"
     end
   end
 end
@@ -108,3 +121,4 @@ plugin.map 'pointstats', :action => 'stats'
 plugin.map 'points :key', :defaults => {:key => false}
 plugin.map 'setpoints :key :val', :defaults => {:key => false}, :requirements => {:val => /^-?\d+$/}, :auth_path => 'edit::set!'
 plugin.map 'points for :key'
+plugin.map 'pointsdump', :action => 'dump'
