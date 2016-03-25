@@ -57,6 +57,15 @@ class Registry
     @libpath = File.join(File.dirname(__FILE__), 'registry')
     @format = format
     load File.join(@libpath, @format+'.rb') if format
+    # The get_impl method will return all implementations of the
+    # abstract accessor interface, since we only ever load one
+    # (the configured one) accessor implementation, we can just assume
+    # it to be the correct accessor to use.
+    accessors = AbstractAccessor.get_impl
+    if accessors.length > 1
+      warning 'multiple accessor implementations loaded!'
+    end
+    @accessor_class = accessors.first
   end
 
   # Returns a list of supported registry database formats.
@@ -68,12 +77,7 @@ class Registry
 
   # Creates a new Accessor object for the specified database filename.
   def create(path, filename)
-    # The get_impl method will return a list of all the classes that
-    # implement the accessor interface, since we only ever load one
-    # (the configured one) accessor implementation, we can just assume
-    # it to be the correct accessor to use.
-    cls = AbstractAccessor.get_impl.first
-    db = cls.new(File.join(path, 'registry_' + @format, filename.downcase))
+    db = @accessor_class.new(File.join(path, 'registry_' + @format, filename.downcase))
     db.optimize
     db
   end
@@ -330,7 +334,7 @@ class Registry
 
     # Returns all classes from the namespace that implement this interface
     def self.get_impl
-      ObjectSpace.each_object(Class).select { |klass| klass < self }
+      ObjectSpace.each_object(Class).select { |klass| klass.ancestors[1] == self }
     end
   end
 
