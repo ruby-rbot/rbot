@@ -1,3 +1,5 @@
+require 'rake'
+
 Gem::Specification.new do |s|
   s.name = 'rbot'
   s.version = '0.9.15'
@@ -17,13 +19,13 @@ Gem::Specification.new do |s|
 	  'COPYING',
 	  'COPYING.rbot',
 	  'GPLv2',
-	  'README.rdoc',
+	  'README.md',
 	  'REQUIREMENTS',
 	  'TODO',
 	  'ChangeLog',
 	  'INSTALL',
 	  'Usage_en.txt',
-	  'man/rbot.1',
+	  'man/rbot.xml',
 	  'setup.rb',
 	  'launch_here.rb',
 	  'po/*.pot',
