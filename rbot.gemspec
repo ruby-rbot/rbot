@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
     A modular ruby IRC bot specifically designed for ease of extension via plugins.
   EOF
   s.requirements << 'Ruby, version 1.9.3 (or newer)'
+  s.licenses = ['GPL-2.0']
 
   s.files = FileList[
 	  'lib/**/*.rb',
@@ -34,17 +35,14 @@ Gem::Specification.new do |s|
 
   s.bindir = 'bin'
   s.executables = ['rbot', 'rbotdb']
-  s.default_executable = 'rbot'
   s.extensions = 'Rakefile'
 
-#  s.autorequire = 'rbot/ircbot'
-  s.has_rdoc = true
   s.rdoc_options = ['--exclude', 'post-install.rb',
   '--title', 'rbot API Documentation', '--main', 'README.rdoc', 'README.rdoc']
 
   s.author = 'Tom Gilbert'
   s.email = 'tom@linuxbrit.co.uk'
-  s.homepage = 'http://ruby-rbot.org'
-  s.rubyforge_project = 'rbot'
+  s.homepage = 'https://ruby-rbot.org'
+
 end
 

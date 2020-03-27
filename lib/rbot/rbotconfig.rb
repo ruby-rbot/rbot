@@ -33,9 +33,9 @@ class Bot
           version = $version
         end
         debug "loaded rubygems, looking for rbot version #{$version} (rbot-#{version})"
-        gemname, gem = Gem.source_index.find{|name, spec| spec.name == 'rbot' && spec.version.version == version}
-        debug "got gem #{gem}"
-        if gem && path = gem.full_gem_path
+        gem = Gem::Specification.find{|spec| spec.name == 'rbot' && spec.version.version == version}
+        if gem
+          path = gem.full_gem_path
           debug "installed via rubygems to #{path}"
           @@datadir = "#{path}/data/rbot"
           @@coredir = "#{path}/lib/rbot/core"
