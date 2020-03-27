@@ -38,36 +38,36 @@ module Plugins
 
      Examples:
 
-       plugin.map 'karmastats', :action => 'karma_stats'
+       plugin.map 'pointstats', :action => 'point_stats'
 
        # while in the plugin...
-       def karma_stats(m, params)
+       def point_stats(m, params)
          m.reply "..."
        end
 
        # the default action is the first component
-       plugin.map 'karma'
+       plugin.map 'points'
 
        # attributes can be pulled out of the match string
-       plugin.map 'karma for :key'
-       plugin.map 'karma :key'
+       plugin.map 'points for :key'
+       plugin.map 'points :key'
 
        # while in the plugin...
-       def karma(m, params)
+       def points(m, params)
          item = params[:key]
-         m.reply 'karma for #{item}'
+         m.reply 'points for #{item}'
        end
 
        # you can setup defaults, to make parameters optional
-       plugin.map 'karma :key', :defaults => {:key => 'defaultvalue'}
+       plugin.map 'points :key', :defaults => {:key => 'defaultvalue'}
 
        # the default auth check is also against the first component
        # but that can be changed
-       plugin.map 'karmastats', :auth => 'karma'
+       plugin.map 'pointstats', :auth => 'points'
 
        # maps can be restricted to public or private message:
-       plugin.map 'karmastats', :private => false
-       plugin.map 'karmastats', :public => false
+       plugin.map 'pointstats', :private => false
+       plugin.map 'pointstats', :public => false
 
      See MessageMapper#map for more information on the template format and the
      allowed options.

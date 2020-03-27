@@ -199,12 +199,12 @@ class Bot
     #
     # Further examples:
     #
-    #   # match 'karmastats' and call my stats() method
-    #   plugin.map 'karmastats', :action => 'stats'
-    #   # match 'karma' with an optional 'key' and call my karma() method
-    #   plugin.map 'karma :key', :defaults => {:key => false}
-    #   # match 'karma for something' and call my karma() method
-    #   plugin.map 'karma for :key'
+    #   # match 'pointstats' and call my stats() method
+    #   plugin.map 'pointstats', :action => 'stats'
+    #   # match 'points' with an optional 'key' and call my points() method
+    #   plugin.map 'points :key', :defaults => {:key => false}
+    #   # match 'points for something' and call my points() method
+    #   plugin.map 'points for :key'
     #
     #   # two matches, one for public messages in a channel, one for
     #   # private messages which therefore require a channel argument
