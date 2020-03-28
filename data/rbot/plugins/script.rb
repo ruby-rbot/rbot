@@ -17,10 +17,6 @@ define_structure :Command, :code, :nick, :created, :channel
 
 class ScriptPlugin < Plugin
 
-  Config.register Config::IntegerValue.new('script.safe',
-    :default => 3,
-    :desc => 'configure $SAFE level for scripts (3=safe/tainted, 0=unsafe/ruby default)')
-
   def initialize
     super
     if @registry.has_key?(:commands)
@@ -64,7 +60,7 @@ class ScriptPlugin < Plugin
       auth_path = "script::run::#{name}".intern
       return unless @bot.auth.allow?(auth_path, m.source, m.replyto)
 
-      code = @commands[name].code.dup.untaint
+      code = @commands[name].code.dup
 
       # Convenience variables, can be accessed by scripts:
       args = m.message.split
@@ -72,8 +68,6 @@ class ScriptPlugin < Plugin
       user = args.empty? ? m.sourcenick : args.first
 
       Thread.start {
-        $SAFE = @bot.config['script.safe']
-
         begin
           eval( code )
         rescue Exception => e
@@ -106,10 +100,8 @@ class ScriptPlugin < Plugin
 
 
   def handle_eval( m, params )
-    code = params[:code].to_s.dup.untaint
+    code = params[:code].to_s.dup
     Thread.start {
-      $SAFE = @bot.config['script.safe']
-
       begin
         eval( code )
       rescue Exception => e
@@ -121,10 +113,8 @@ class ScriptPlugin < Plugin
 
 
   def handle_echo( m, params )
-    code = params[:code].to_s.dup.untaint
+    code = params[:code].to_s.dup
     Thread.start {
-      $SAFE = @bot.config['script.safe']
-
       begin
         m.reply eval( code ).to_s
       rescue Exception => e
@@ -205,6 +195,7 @@ plugin = ScriptPlugin.new
 plugin.default_auth( 'edit', false )
 plugin.default_auth( 'eval', false )
 plugin.default_auth( 'echo', false )
+plugin.default_auth( 'show', false )
 plugin.default_auth( 'run', true )
 
 plugin.map 'script add -f :name *code', :action => 'handle_add_force', :auth_path => 'edit'
