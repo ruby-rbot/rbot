@@ -15,7 +15,7 @@ $debug = false unless $debug
 $daemonize = false unless $daemonize
 
 $dateformat = "%Y/%m/%d %H:%M:%S"
-$logger = Logger.new($stderr)
+$logger = Logger.new(STDERR)
 $logger.datetime_format = $dateformat
 $logger.level = $cl_loglevel if defined? $cl_loglevel
 $logger.level = 0 if $debug
@@ -127,12 +127,6 @@ def fatal(message=nil, who_pos=1)
   rawlog(Logger::Severity::FATAL, message, who_pos)
 end
 
-debug "debug test"
-log "log test"
-warning "warning test"
-error "error test"
-fatal "fatal test"
-
 # The following global is used for the improved signal handling.
 $interrupted = 0
 
@@ -163,7 +157,7 @@ module Irc
 # handles them or passes them to plugins, and contains core functionality.
 class Bot
   COPYRIGHT_NOTICE = "(c) Giuseppe Bilotta and the rbot development team"
-  SOURCE_URL = "http://ruby-rbot.org"
+  SOURCE_URL = "https://ruby-rbot.org"
   # the bot's Auth data
   attr_reader :auth
 
@@ -534,15 +528,17 @@ class Bot
       # File.umask 0000                # Ensure sensible umask. Adjust as needed.
     end
 
-    logger = Logger.new(@logfile,
-                        @config['log.keep'],
-                        @config['log.max_size']*1024*1024)
-    logger.datetime_format= $dateformat
-    logger.level = @config['log.level']
-    logger.level = $cl_loglevel if defined? $cl_loglevel
-    logger.level = 0 if $debug
+    unless $debug
+      logger = Logger.new(@logfile,
+                          @config['log.keep'],
+                          @config['log.max_size']*1024*1024)
+      logger.datetime_format= $dateformat
+      logger.level = @config['log.level']
+      logger.level = $cl_loglevel if defined? $cl_loglevel
+      logger.level = 0 if $debug
 
-    restart_logger(logger)
+      restart_logger(logger)
+    end
 
     log_session_start
 
