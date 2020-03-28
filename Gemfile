@@ -19,3 +19,4 @@ group :optional do
   gem 'oauth2'
 end
 
+gem "rake", "~> 13.0"
