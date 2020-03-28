@@ -12,7 +12,7 @@
 # License:: MIT license
 
 class Imdb
-  IMDB = "http://www.imdb.com"
+  IMDB = "https://www.imdb.com"
   TITLE_OR_NAME_MATCH = /<a\s+href="(\/(?:title|name)\/(?:tt|nm)[0-9]+\/?)[^"]*"(?:[^>]*)>([^<]*)<\/a>/
   TITLE_MATCH = /<a\s+href="(\/title\/tt[0-9]+\/?)[^"]*"(?:[^>]*)>([^<]*)<\/a>/
   NAME_MATCH = /<a\s+onclick="[^"]+"\s+href="(\/name\/nm[0-9]+\/?)[^"]*"(?:[^>]*)>([^<]*)<\/a>/
