@@ -1001,7 +1001,7 @@ module Plugins
       sort_modules unless @sorted_modules
 
       opts = {}
-      opts.merge(args.pop) if args.last.class == Hash
+      opts.merge!(args.pop) if args.last.class == Hash
 
       m = args.first
       if BasicUserMessage === m
