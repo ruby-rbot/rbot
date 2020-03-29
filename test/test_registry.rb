@@ -1,5 +1,14 @@
 $:.unshift File.join(File.dirname(__FILE__), '../lib')
 
+module Irc
+class Bot
+  module Config
+    @@datadir = File.expand_path(File.dirname($0) + '/../data/rbot')
+    @@coredir = File.expand_path(File.dirname($0) + '/../lib/rbot/core') 
+  end
+end
+end
+
 require 'test/unit'
 require 'rbot/ircbot'
 require 'rbot/registry'
@@ -293,34 +302,39 @@ class RegistryTCTest < Test::Unit::TestCase
   end
 end
 
-class RegistryDaybreakTest < Test::Unit::TestCase
-  include RegistryTestModule
-  include RegistryHashInterfaceTests
+begin
+  require 'daybreak'
+  class RegistryDaybreakTest < Test::Unit::TestCase
+    include RegistryTestModule
+    include RegistryHashInterfaceTests
 
-  def initialize(o)
-    super o
-    @format = 'daybreak'
-    Irc::Bot::Registry.new(@format)
-    @registry_class = Irc::Bot::Registry::DaybreakAccessor
+    def initialize(o)
+      super o
+      @format = 'daybreak'
+      Irc::Bot::Registry.new(@format)
+      @registry_class = Irc::Bot::Registry::DaybreakAccessor
+    end
   end
-end
+rescue Exception; end
 
-class RegistrySqliteTest < Test::Unit::TestCase
-  include RegistryTestModule
-  include RegistryHashInterfaceTests
+begin
+  require 'sqlite'
+  class RegistrySqliteTest < Test::Unit::TestCase
+    include RegistryTestModule
+    include RegistryHashInterfaceTests
 
-  def initialize(o)
-    super o
-    @format = 'sqlite'
-    Irc::Bot::Registry.new(@format)
-    @registry_class = Irc::Bot::Registry::SqliteAccessor
+    def initialize(o)
+      super o
+      @format = 'sqlite'
+      Irc::Bot::Registry.new(@format)
+      @registry_class = Irc::Bot::Registry::SqliteAccessor
+    end
+
+    def test_duplicate_keys
+      @reg['foo'] = 1
+      @reg['foo'] = 2
+      res = @reg.registry.execute('select key from data')
+      assert res.length == 1
+    end
   end
-
-  def test_duplicate_keys
-    @reg['foo'] = 1
-    @reg['foo'] = 2
-    res = @reg.registry.execute('select key from data')
-    assert res.length == 1
-  end
-end
-
+rescue Exception; end

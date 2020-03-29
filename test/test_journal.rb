@@ -1,10 +1,17 @@
 $:.unshift File.join(File.dirname(__FILE__), '../lib')
 
+module Irc
+class Bot
+  module Config
+    @@datadir = File.expand_path(File.dirname($0) + '/../data/rbot')
+    @@coredir = File.expand_path(File.dirname($0) + '/../lib/rbot/core') 
+  end
+end
+end
+
 require 'test/unit'
 require 'rbot/ircbot'
 require 'rbot/journal'
-require 'rbot/journal/postgres.rb'
-require 'rbot/journal/mongo.rb'
 
 require 'benchmark'
 
@@ -364,58 +371,63 @@ module JournalStorageTestMixin
 
 end
 
-if ENV['PG_URI']
-class JournalStoragePostgresTest < Test::Unit::TestCase
+begin
+  require 'rbot/journal/postgres.rb'
+  if ENV['PG_URI']
+  class JournalStoragePostgresTest < Test::Unit::TestCase
 
-  include JournalStorageTestMixin
+    include JournalStorageTestMixin
 
-  def setup
-    @storage = Storage::PostgresStorage.new(
-      uri: ENV['PG_URI'] || 'postgresql://localhost/rbot_journal',
-      drop: true)
-  end
-
-  def test_query_to_sql
-    q = Query.define do
-      id 'foo'
-      id 'bar', 'baz'
-      topic 'log.irc.*'
-      topic 'log.core', 'baz'
-      timestamp from: Time.now, to: Time.now + 60 * 10
-      payload 'action': :privmsg, 'alice': 'bob'
-      payload 'channel': '#rbot'
-      payload 'foo.bar': 'baz'
+    def setup
+      @storage = Storage::PostgresStorage.new(
+        uri: ENV['PG_URI'] || 'postgresql://localhost/rbot_journal',
+        drop: true)
     end
-    sql = @storage.query_to_sql(q)
-    assert_equal("(id = $1 OR id = $2 OR id = $3) AND (topic ILIKE $4 OR topic ILIKE $5 OR topic ILIKE $6) AND (timestamp >= $7 AND timestamp <= $8) AND (payload->>'action' = $9 OR payload->>'alice' = $10 OR payload->>'channel' = $11 OR payload->'foo'->>'bar' = $12)", sql[0])
-    q = Query.define do
-      id 'foo'
+
+    def test_query_to_sql
+      q = Query.define do
+        id 'foo'
+        id 'bar', 'baz'
+        topic 'log.irc.*'
+        topic 'log.core', 'baz'
+        timestamp from: Time.now, to: Time.now + 60 * 10
+        payload 'action': :privmsg, 'alice': 'bob'
+        payload 'channel': '#rbot'
+        payload 'foo.bar': 'baz'
+      end
+      sql = @storage.query_to_sql(q)
+      assert_equal("(id = $1 OR id = $2 OR id = $3) AND (topic ILIKE $4 OR topic ILIKE $5 OR topic ILIKE $6) AND (timestamp >= $7 AND timestamp <= $8) AND (payload->>'action' = $9 OR payload->>'alice' = $10 OR payload->>'channel' = $11 OR payload->'foo'->>'bar' = $12)", sql[0])
+      q = Query.define do
+        id 'foo'
+      end
+      assert_equal('(id = $1)', @storage.query_to_sql(q)[0])
+      q = Query.define do
+        topic 'foo.*.bar'
+      end
+      assert_equal('(topic ILIKE $1)', @storage.query_to_sql(q)[0])
+      assert_equal(['foo.%.bar'], @storage.query_to_sql(q)[1])
     end
-    assert_equal('(id = $1)', @storage.query_to_sql(q)[0])
-    q = Query.define do
-      topic 'foo.*.bar'
+
+  end
+  else
+    puts 'NOTE: Set PG_URI environment variable to test postgresql storage.'
+  end
+rescue Exception; end
+
+begin
+  require 'rbot/journal/mongo.rb'
+  if ENV['MONGO_URI']
+  class JournalStorageMongoTest < Test::Unit::TestCase
+
+    include JournalStorageTestMixin
+
+    def setup
+      @storage = Storage::MongoStorage.new(
+        uri: ENV['MONGO_URI'] || 'mongodb://127.0.0.1:27017/rbot',
+        drop: true)
     end
-    assert_equal('(topic ILIKE $1)', @storage.query_to_sql(q)[0])
-    assert_equal(['foo.%.bar'], @storage.query_to_sql(q)[1])
   end
-
-end
-else
-  puts 'NOTE: Set PG_URI environment variable to test postgresql storage.'
-end
-
-if ENV['MONGO_URI']
-class JournalStorageMongoTest < Test::Unit::TestCase
-
-  include JournalStorageTestMixin
-
-  def setup
-    @storage = Storage::MongoStorage.new(
-      uri: ENV['MONGO_URI'] || 'mongodb://127.0.0.1:27017/rbot',
-      drop: true)
+  else
+    puts 'NOTE: Set MONGO_URI environment variable to test postgresql storage.'
   end
-end
-else
-  puts 'NOTE: Set MONGO_URI environment variable to test postgresql storage.'
-end
-
+rescue Exception; end

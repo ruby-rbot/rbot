@@ -3,6 +3,7 @@ $:.unshift File.join(File.dirname(__FILE__), '../lib')
 require 'test/unit'
 require 'rbot/config'
 require 'rbot/plugins'
+require 'rbot/message'
 
 require 'pp'
 
@@ -93,7 +94,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
   end
 
   def test_above
-    @@manager.delegate_event('test', :above => 3)
+    @@manager.delegate('test', :above => 3)
 
     assert_equal 0, @mock1.test_called_at.size
     assert_equal 0, @mock2.test_called_at.size
@@ -103,7 +104,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
   end
 
   def test_below
-    @@manager.delegate_event('test', :below => 3)
+    @@manager.delegate('test', :below => 3)
 
     assert_equal 1, @mock1.test_called_at.size
     assert_equal 1, @mock2.test_called_at.size
@@ -113,7 +114,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
   end
 
   def test_fast_delagate_above
-    @@manager.delegate_event('connect', :above => 3)
+    @@manager.delegate('connect', :above => 3)
 
     assert_equal 0, @mock1.connect_called_at.size
     assert_equal 0, @mock2.connect_called_at.size
@@ -123,7 +124,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
   end
 
   def test_fast_delagate_above
-    @@manager.delegate_event('connect', :below => 3)
+    @@manager.delegate('connect', :below => 3)
 
     assert_equal 1, @mock1.connect_called_at.size
     assert_equal 1, @mock2.connect_called_at.size
@@ -133,7 +134,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
   end
 
   def test_call_with_args
-    @@manager.delegate_event('test_arg', :above => 3, :args => [1])
+    @@manager.delegate('test_arg', 1, :above => 3)
 
     assert_equal 0, @mock3.test_arg_called_at.size
     assert_equal 1, @mock4.test_arg_called_at.size
