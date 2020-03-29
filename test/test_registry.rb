@@ -278,29 +278,35 @@ module RegistryTestModule
   end
 end
 
-class RegistryDBMTest < Test::Unit::TestCase
-  include RegistryTestModule
-  include RegistryHashInterfaceTests
+begin
+  require 'dbm'
+  class RegistryDBMTest < Test::Unit::TestCase
+    include RegistryTestModule
+    include RegistryHashInterfaceTests
 
-  def initialize(o)
-    super o
-    @format = 'dbm'
-    Irc::Bot::Registry.new(@format)
-    @registry_class = Irc::Bot::Registry::DBMAccessor
+    def initialize(o)
+      super o
+      @format = 'dbm'
+      Irc::Bot::Registry.new(@format)
+      @registry_class = Irc::Bot::Registry::DBMAccessor
+    end
   end
-end
+rescue Exception; end
 
-class RegistryTCTest < Test::Unit::TestCase
-  include RegistryTestModule
-  include RegistryHashInterfaceTests
+begin
+  require 'tc'
+  class RegistryTCTest < Test::Unit::TestCase
+    include RegistryTestModule
+    include RegistryHashInterfaceTests
 
-  def initialize(o)
-    super o
-    @format = 'tc'
-    Irc::Bot::Registry.new(@format)
-    @registry_class = Irc::Bot::Registry::TokyoCabinetAccessor
+    def initialize(o)
+      super o
+      @format = 'tc'
+      Irc::Bot::Registry.new(@format)
+      @registry_class = Irc::Bot::Registry::TokyoCabinetAccessor
+    end
   end
-end
+rescue Exception; end
 
 begin
   require 'daybreak'
