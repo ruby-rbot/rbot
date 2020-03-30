@@ -30,7 +30,7 @@ class MockBot
   end
 
   def registry_factory
-    Irc::Bot::Registry.new('tc')
+    Irc::Bot::Registry.new('dbm')
   end
 end
 
