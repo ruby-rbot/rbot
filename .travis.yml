@@ -4,7 +4,7 @@ before_install:
 - sudo apt-get update -y
 - sudo apt-get install -y libtokyocabinet-dev zlib1g-dev libbz2-dev libxml2-dev libxslt1-dev
 script:
-- rake test
+- bundle exec rake test
 rvm:
   - 2.7.0
   - 2.6.0
