@@ -30,29 +30,21 @@ class MockBot
   end
 
   def registry_factory
-    Irc::Bot::Registry.new('dbm')
+    Irc::Bot::Registry.new('tc')
   end
 end
 
 
 class PluginTest < Test::Unit::TestCase
   def setup
-    Irc::Bot::Plugins.manager.bot_associate(MockBot.new)
-
-    # @plugin = RotPlugin.new(MockBot.new)
-    # require ''
-    plugin_module = Module.new
-    fname = './data/rbot/plugins/rot13.rb'
-    bindtextdomain_to(plugin_module, "rbot-#{File.basename(fname, '.rb')}")
-    plugin_string = IO.read(fname)
-    plugin_module.module_eval(plugin_string, fname)
+    manager = Irc::Bot::Plugins.manager
+    manager.bot_associate(MockBot.new)
+    manager.load_botmodule_file('./data/rbot/plugins/rot13.rb')
+    @plugin = manager.get_plugin('rot')
   end
 
   def test_rot13
-    plugins = Irc::Bot::Plugins.manager.botmodules[:Plugin]
-    assert_equal(plugins.size, 1)
-    rot13 = plugins.first
-
-    assert_equal(rot13.help(nil), "rot13 <string> => encode <string> to rot13 or back")
+    assert_not_nil(@plugin)
+    assert_equal(@plugin.help(nil), "rot13 <string> => encode <string> to rot13 or back")
   end
 end
