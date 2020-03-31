@@ -123,7 +123,7 @@ class PluginsPriorityTest < Test::Unit::TestCase
     assert_equal 1, @mock5.connect_called_at.size
   end
 
-  def test_fast_delagate_above
+  def test_fast_delagate_below
     @@manager.delegate('connect', :below => 3)
 
     assert_equal 1, @mock1.connect_called_at.size
