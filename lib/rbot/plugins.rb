@@ -215,6 +215,7 @@ module Plugins
       @registry.flush
     end
 
+
     # Method called to cleanup before the plugin is unloaded. If you overload
     # this method to handle additional cleanup tasks, remember to call super()
     # so that the default cleanup actions are taken care of as well.
@@ -582,6 +583,10 @@ module Plugins
       ([str, err.inspect] + err.backtrace).join("\n")
     end
 
+    def get_plugin(name)
+      plugins.find { |plugin| plugin.name == name }
+    end
+
     # This method is the one that actually loads a module from the
     # file _fname_
     #
@@ -653,7 +658,6 @@ module Plugins
         return newerr
       end
     end
-    private :load_botmodule_file
 
     # add one or more directories to the list of directories to
     # load core modules from

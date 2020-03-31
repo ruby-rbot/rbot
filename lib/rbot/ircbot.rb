@@ -9,20 +9,6 @@ require 'thread'
 require 'etc'
 require 'date'
 require 'fileutils'
-require 'logger'
-
-$debug = false unless $debug
-$daemonize = false unless $daemonize
-
-$dateformat = "%Y/%m/%d %H:%M:%S"
-$logger = Logger.new(STDERR)
-$logger.datetime_format = $dateformat
-$logger.level = $cl_loglevel if defined? $cl_loglevel
-$logger.level = 0 if $debug
-$logger_stderr = $logger
-
-$log_queue = Queue.new
-$log_thread = nil
 
 require 'pp'
 
@@ -47,100 +33,14 @@ end
 class ServerError < RuntimeError
 end
 
-def rawlog(level, message=nil, who_pos=1)
-  call_stack = caller
-  if call_stack.length > who_pos
-    who = call_stack[who_pos].sub(%r{(?:.+)/([^/]+):(\d+)(:in .*)?}) { "#{$1}:#{$2}#{$3}" }
-  else
-    who = "(unknown)"
-  end
-  # Output each line. To distinguish between separate messages and multi-line
-  # messages originating at the same time, we blank #{who} after the first message
-  # is output.
-  # Also, we output strings as-is but for other objects we use pretty_inspect
-  message = message.kind_of?(String) ? message : (message.pretty_inspect rescue '?')
-  qmsg = Array.new
-  message.each_line { |l|
-    qmsg.push [level, l.chomp, who]
-    who = ' ' * who.size
-  }
-  if level >= Logger::Severity::WARN and not $daemonize
-    qmsg.each do |l|
-      $logger_stderr.add(*l)
-    end
-  end
-  $log_queue.push qmsg
-end
-
-def halt_logger
-  if $log_thread && $log_thread.alive?
-    $log_queue << nil
-    $log_thread.join
-    $log_thread = nil
-  end
-end
-
-END { halt_logger }
-
-def restart_logger(newlogger = false)
-  halt_logger
-
-  $logger = newlogger if newlogger
-
-  $log_thread = Thread.new do
-    ls = nil
-    while ls = $log_queue.pop
-      ls.each { |l| $logger.add(*l) }
-    end
-  end
-end
-
-restart_logger
-
-def log_session_start
-  $logger << "\n\n=== #{botclass} session started on #{Time.now.strftime($dateformat)} ===\n\n"
-  restart_logger
-end
-
-def log_session_end
-  $logger << "\n\n=== #{botclass} session ended on #{Time.now.strftime($dateformat)} ===\n\n"
-  $log_queue << nil
-end
-
-def debug(message=nil, who_pos=1)
-  rawlog(Logger::Severity::DEBUG, message, who_pos)
-end
-
-def log(message=nil, who_pos=1)
-  rawlog(Logger::Severity::INFO, message, who_pos)
-end
-
-def warning(message=nil, who_pos=1)
-  rawlog(Logger::Severity::WARN, message, who_pos)
-end
-
-def error(message=nil, who_pos=1)
-  rawlog(Logger::Severity::ERROR, message, who_pos)
-end
-
-def fatal(message=nil, who_pos=1)
-  rawlog(Logger::Severity::FATAL, message, who_pos)
-end
-
 # The following global is used for the improved signal handling.
 $interrupted = 0
 
 # these first
+require 'rbot/logger'
 require 'rbot/rbotconfig'
-begin
-  require 'rubygems'
-rescue LoadError
-  log "rubygems unavailable"
-end
-
 require 'rbot/load-gettext'
 require 'rbot/config'
-
 require 'rbot/irc'
 require 'rbot/rfc2812'
 require 'rbot/ircsocket'
@@ -362,7 +262,7 @@ class Bot
       :default => 1, :requires_restart => false,
       :validate => Proc.new { |v| (0..5).include?(v) },
       :on_change => Proc.new { |bot, v|
-        $logger.level = v
+        LoggerManager.instance.set_level(v)
       },
       :desc => "The minimum logging level (0=DEBUG,1=INFO,2=WARN,3=ERROR,4=FATAL) for console messages")
     Config.register Config::IntegerValue.new('log.keep',
@@ -491,7 +391,6 @@ class Bot
       @config.bot_associate(self)
     rescue Exception => e
       fatal e
-      log_session_end
       exit 2
     end
 
@@ -503,7 +402,7 @@ class Bot
     @registry_factory.migrate_registry_folder(path)
 
     @logfile = @config['log.file']
-    if @logfile.class!=String || @logfile.empty?
+    if @logfile.class != String || @logfile.empty?
       logfname =  File.basename(botclass).gsub(/^\.+/,'')
       logfname << ".log"
       @logfile = File.join(botclass, logfname)
@@ -528,19 +427,9 @@ class Bot
       # File.umask 0000                # Ensure sensible umask. Adjust as needed.
     end
 
-    unless $debug
-      logger = Logger.new(@logfile,
-                          @config['log.keep'],
-                          @config['log.max_size']*1024*1024)
-      logger.datetime_format= $dateformat
-      logger.level = @config['log.level']
-      logger.level = $cl_loglevel if defined? $cl_loglevel
-      logger.level = 0 if $debug
-
-      restart_logger(logger)
-    end
-
-    log_session_start
+    # setup logger based on bot configuration
+    LoggerManager.instance.set_level(@config['log.level'])
+    LoggerManager.instance.set_logfile(@logfile, @config['log.keep'], @config['log.max_size'])
 
     if $daemonize
       log "Redirecting standard input/output/error"
@@ -589,7 +478,6 @@ class Bot
       # @auth.load("#{botclass}/botusers.yaml")
     rescue Exception => e
       fatal e
-      log_session_end
       exit 2
     end
     @auth.everyone.set_default_permission("*", true)
@@ -952,7 +840,6 @@ class Bot
     debug "interrupted #{$interrupted} times"
     if $interrupted >= 3
       debug "drastic!"
-      log_session_end
       exit 2
     end
   end
@@ -1027,7 +914,6 @@ class Bot
 
       connect
     rescue SystemExit
-      log_session_end
       exit 0
     rescue Exception => e
       error e
@@ -1068,7 +954,6 @@ class Bot
       # exceptions that ARENT SocketError's. How am I supposed to handle
       # that?
       rescue SystemExit
-        log_session_end
         exit 0
       rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, TimeoutError, SocketError => e
         error "network exception: #{e.pretty_inspect}"
@@ -1112,7 +997,6 @@ class Bot
         quit_msg = e.to_s
       rescue => e
         fatal "unexpected exception: #{e.pretty_inspect}"
-        log_session_end
         exit 2
       end
     end
@@ -1381,11 +1265,9 @@ class Bot
       # now we re-exec
       # Note, this fails on Windows
       debug "going to exec #{$0} #{@argv.inspect} from #{@run_dir}"
-      log_session_end
       Dir.chdir(@run_dir)
       exec($0, *@argv)
     rescue Errno::ENOENT
-      log_session_end
       exec("ruby", *(@argv.unshift $0))
     rescue Exception => e
       $interrupted += 1

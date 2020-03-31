@@ -61,16 +61,12 @@ opts = GetoptLong.new(
   ["--version", "-v", GetoptLong::NO_ARGUMENT]
 )
 
-$debug = $DEBUG
 $daemonize = false
 
 opts.each {|opt, arg|
-  $debug = true if(opt == "--debug")
   $daemonize = true if(opt == "--background")
   $opts[opt.sub(/^-+/, "")] = arg
 }
-
-$cl_loglevel = $opts["loglevel"].to_i if $opts["loglevel"]
 
 if ($opts["trace"])
   set_trace_func proc { |event, file, line, id, binding, classname|
@@ -116,6 +112,13 @@ if ($opts["help"])
 end
 
 if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
+  # setup logger based on command line arguments
+  loglevel = $opts['loglevel'] ? $opts['loglevel'].to_i : nil
+  loglevel = $opts['debug'] ? 0 : nil
+  if loglevel
+    Irc::Bot::LoggerManager.instance.set_level(loglevel)
+  end
+
   # just run the bot
   bot.mainloop
 end
