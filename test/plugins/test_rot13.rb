@@ -25,12 +25,29 @@ class MockBot
     @filters[name] = block
   end
 
+  def filter(name, value)
+    @filters[name].call({text: value})[:text]
+  end
+
   def path
     ''
   end
 
   def registry_factory
     Irc::Bot::Registry.new('tc')
+  end
+end
+
+
+class MockMessage
+  attr_reader :messages
+
+  def initialize
+    @messages = []
+  end
+
+  def reply(message)
+    @messages << message
   end
 end
 
@@ -46,5 +63,8 @@ class PluginTest < Test::Unit::TestCase
   def test_rot13
     assert_not_nil(@plugin)
     assert_equal(@plugin.help(nil), "rot13 <string> => encode <string> to rot13 or back")
+    m = MockMessage.new
+    @plugin.rot13(m, {string: 'Hello World'})
+    assert_equal(m.messages.first, 'Uryyb Jbeyq')
   end
 end
