@@ -15,10 +15,10 @@
 # TODO:: support localized uncyclopedias -- not easy because they have different names
 #        for most languages
 
-GOOGLE_SEARCH = "http://www.google.com/search?oe=UTF-8&q="
-GOOGLE_WAP_SEARCH = "http://www.google.com/m/search?hl=en&q="
-GOOGLE_WAP_LINK = /"r">(?:<div[^>]*>)?<a href="([^"]+)"[^>]*>(.*?)<\/a>/im
-GOOGLE_CALC_RESULT = %r{<h[1-6] class="r" [^>]*>(.+?)</h}
+GOOGLE_SEARCH = "https://www.google.com/search?hl=en&oe=UTF-8&ie=UTF-8&gbv=1&q="
+GOOGLE_WAP_SEARCH = "https://www.google.com/m/search?hl=en&ie=UTF-8&gbv=1&q="
+GOOGLE_WAP_LINK = /<a\s+href="\/url\?(q=[^"]+)"[^>]*>\s*<div[^>]*>(.*?)\s*<\/div>/im
+GOOGLE_CALC_RESULT = />Calculator<\/span>(?:<\/?[^>]+>\s*)+([^<]+)/ 
 GOOGLE_COUNT_RESULT = %r{<font size=-1>Results <b>1<\/b> - <b>10<\/b> of about <b>(.*)<\/b> for}
 GOOGLE_DEF_RESULT = %r{onebox_result">\s*(.*?)\s*<br/>\s*(.*?)<table}
 GOOGLE_TIME_RESULT = %r{alt="Clock"></td><td valign=[^>]+>(.+?)<(br|/td)>}
@@ -90,7 +90,6 @@ class SearchPlugin < Plugin
       m.reply "error duckduckgoing for #{what}"
       return
     end
-    debug feed
 
     xml = REXML::Document.new feed
     heading = xml.elements['//Heading/text()'].to_s
@@ -229,60 +228,25 @@ class SearchPlugin < Plugin
       return
     end
 
-    single ||= (results.length==1)
-    pretty = []
+    results = results.map {|result|
+      url = CGI::parse(Utils.decode_html_entities(result[0]))['q'].first
+      title = Utils.decode_html_entities(result[1].gsub(/<\/?[^>]+>/, ''))
+      [url, title] unless url.empty? or title.empty?
+    }.reject {|item| not item}[0..hits]
 
-    begin
-      urls = Array.new
-
-      debug results
-      results.each do |res|
-        t = res[1].ircify_html(:img => "[%{src} %{alt} %{dimensions}]").strip
-        u = res[0]
-        if u.sub!(%r{^http://www.google.com/aclk\?},'')
-          u = CGI::parse(u)['adurl'].first
-          debug "skipping ad for #{u}"
-          next
-        elsif u.sub!(%r{^http://www.google.com/gwt/x\?},'')
-          u = CGI::parse(u)['u'].first
-        elsif u.sub!(%r{^/url\?},'')
-          u = CGI::parse(u)['q'].first
-        end
-        urls.push(u)
-        pretty.push("%{n}%{b}%{t}%{b}%{sep}%{u}" % {
-          :n => (single ? "" : "#{urls.length}. "),
-          :sep => (single ? " -- " : ": "),
-          :b => Bold, :t => t, :u => u
-        })
-        break if urls.length == hits
-      end
-    rescue => e
-      m.reply "failed to understand what google found for #{what}"
-      error e
-      debug wml
-      debug results
-      return
-    end
+    result_string = results.map {|url, title| "#{Bold}#{title}#{NormalText}: #{url}"}
 
     if params[:lucky]
-      m.reply pretty.first
+      m.reply result_string.first
+      Utils.get_first_pars([results.map {|url, title| url}.first], first_pars, :message => m)
       return
     end
 
-    result_string = pretty.join(" | ")
-
-    # If we return a single, full result, change the output to a more compact representation
-    if single
-      m.reply "Result for %s: %s -- %s" % [what, result_string, Utils.get_first_pars(urls, first_pars)], :overlong => :truncate
-      return
-    end
-
-    m.reply "Results for #{what}: #{result_string}", :split_at => /\s+\|\s+/
+    m.reply "Results for #{what}: #{result_string.join(' | ')}", :split_at => /\s+\|\s+/
 
     return unless first_pars > 0
 
-    Utils.get_first_pars urls, first_pars, :message => m
-
+    Utils.get_first_pars(results.map {|url, title| url}, first_pars, :message => m)
   end
 
   def google_define(m, what, params)
@@ -342,7 +306,7 @@ class SearchPlugin < Plugin
       m.reply "couldn't calculate #{what}"
       return
     end
-    result = candidates[1]
+    result = candidates[1].remove_nonascii
 
     debug "replying with: #{result.inspect}"
     m.reply result.ircify_html
@@ -504,11 +468,14 @@ end
 
 plugin = SearchPlugin.new
 
-plugin.map "ddg *words", :action => 'duckduckgo', :threaded => true
-plugin.map "search *words", :action => 'google', :threaded => true
-plugin.map "google *words", :action => 'google', :threaded => true
-plugin.map "lucky *words", :action => 'lucky', :threaded => true
+  plugin.map "ddg *words", :action => 'duckduckgo', :threaded => true
+  plugin.map "search *words", :action => 'google', :threaded => true
+  plugin.map "google *words", :action => 'google', :threaded => true
+  plugin.map "lucky *words", :action => 'lucky', :threaded => true
+
+# Broken:
 plugin.map "gcount *words", :action => 'gcount', :threaded => true
+
 plugin.map "gcalc *words", :action => 'gcalc', :threaded => true
 plugin.map "gdef *words", :action => 'gdef', :threaded => true
 plugin.map "gtime *words", :action => 'gtime', :threaded => true

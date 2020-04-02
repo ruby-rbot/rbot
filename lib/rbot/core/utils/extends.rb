@@ -380,6 +380,18 @@ class ::String
 
     return txt
   end
+  
+  # Removes non-ASCII symbols from string
+  def remove_nonascii(replace='')
+    encoding_options = {
+      :invalid           => :replace,  # Replace invalid byte sequences
+      :undef             => :replace,  # Replace anything not defined in ASCII
+      :replace           => replace,   
+      :universal_newline => true       # Always break lines with \n
+    }
+
+    self.encode(Encoding.find('ASCII'), encoding_options)
+  end
 end
 
 # Extensions to the Regexp class, with some common and/or complex regular
