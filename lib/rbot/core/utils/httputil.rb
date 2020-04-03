@@ -29,6 +29,12 @@ rescue LoadError => e
   EOC
 end
 
+begin
+  require 'nokogiri'
+rescue LoadError => e
+  error "No nokogiri library found, some features might not be available!"
+end
+
 # To handle Gzipped pages
 require 'stringio'
 require 'zlib'
@@ -162,6 +168,15 @@ module ::Net
       end
 
       return self.body_to_utf(self.decompress_body(partial))
+    end
+
+    def xpath(path)
+      document = Nokogiri::HTML.parse(self.body)
+      document.xpath(path)
+    end
+
+    def to_json
+      JSON::parse(self.body)
     end
   end
 end
@@ -649,7 +664,11 @@ class HttpUtil
       resp = get_response(uri, options, &block)
       raise "http error: #{resp}" unless Net::HTTPOK === resp ||
         Net::HTTPPartialContent === resp
-      return resp.body
+      if options[:resp]
+        return resp
+      else
+        return resp.body
+      end
     rescue Exception => e
       error e
     end

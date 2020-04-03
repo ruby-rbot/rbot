@@ -19,16 +19,12 @@ GOOGLE_SEARCH = "https://www.google.com/search?hl=en&oe=UTF-8&ie=UTF-8&gbv=1&q="
 GOOGLE_WAP_SEARCH = "https://www.google.com/m/search?hl=en&ie=UTF-8&gbv=1&q="
 GOOGLE_WAP_LINK = /<a\s+href="\/url\?(q=[^"]+)"[^>]*>\s*<div[^>]*>(.*?)\s*<\/div>/im
 GOOGLE_CALC_RESULT = />Calculator<\/span>(?:<\/?[^>]+>\s*)+([^<]+)/ 
-GOOGLE_COUNT_RESULT = %r{<font size=-1>Results <b>1<\/b> - <b>10<\/b> of about <b>(.*)<\/b> for}
-GOOGLE_DEF_RESULT = %r{onebox_result">\s*(.*?)\s*<br/>\s*(.*?)<table}
-GOOGLE_TIME_RESULT = %r{alt="Clock"></td><td valign=[^>]+>(.+?)<(br|/td)>}
-
+GOOGLE_XPATH_DEF = "//img[@id='flex_text_audio_icon_chunk']/../../../../div[3]//text()"
 DDG_API_SEARCH = "http://api.duckduckgo.com/?format=xml&no_html=1&skip_disambig=1&no_redirect=0&q="
-
 WOLFRAM_API_SEARCH = "http://api.wolframalpha.com/v2/query?input=%{terms}&appid=%{key}&format=plaintext" +
            "&scantimeout=3.0&podtimeout=4.0&formattimeout=8.0&parsetimeout=5.0" +
            "&excludepodid=SeriesRepresentations:*"
-WOLFRAM_API_KEY = "4EU37Y-TX9WJG3JH3"
+WOLFRAM_API_KEY = "9RW6XR-QTL2JT7J4W"
 
 class SearchPlugin < Plugin
   Config.register Config::IntegerValue.new('duckduckgo.hits',
@@ -61,8 +57,6 @@ class SearchPlugin < Plugin
       "gcalc <equation> => use the google calculator to find the answer to <equation>"
     when "gdef"
       "gdef <term(s)> => use the google define mechanism to find a definition of <term(s)>"
-    when "gtime"
-      "gtime <location> => use the google clock to find the current time at <location>"
     when "wa"
       "wa <string> => searches WolframAlpha for <string>"
     when "wp"
@@ -312,36 +306,6 @@ class SearchPlugin < Plugin
     m.reply result.ircify_html
   end
 
-  def gcount(m, params)
-    what = params[:words].to_s
-    searchfor = CGI.escape(what)
-
-    debug "Getting gcount thing: #{searchfor.inspect}"
-    url = GOOGLE_SEARCH + searchfor
-
-    begin
-      html = @bot.httputil.get(url)
-    rescue => e
-      m.reply "error googlecounting #{what}"
-      return
-    end
-
-    debug "#{html.size} bytes of html recieved"
-
-    results = html.scan(GOOGLE_COUNT_RESULT)
-    debug "results: #{results.inspect}"
-
-    if results.length != 1
-      m.reply "couldn't count #{what}"
-      return
-    end
-
-    result = results[0][0].ircify_html
-    debug "replying with: #{result.inspect}"
-    m.reply "total results: #{result}"
-
-  end
-
   def gdef(m, params)
     what = params[:words].to_s
     searchfor = CGI.escape("define " + what)
@@ -350,24 +314,19 @@ class SearchPlugin < Plugin
     url = GOOGLE_WAP_SEARCH + searchfor
 
     begin
-      html = @bot.httputil.get(url)
+      resp = @bot.httputil.get(url, resp: true)
     rescue => e
       m.reply "error googledefining #{what}"
       return
     end
 
-    debug html
-    results = html.scan(GOOGLE_DEF_RESULT)
-    debug "results: #{results.inspect}"
+    results = resp.xpath(GOOGLE_XPATH_DEF).map(&:content)
 
-    if results.length != 1
+    if results.empty?
       m.reply "couldn't find a definition for #{what} on Google"
-      return
+    else
+      m.reply "#{results.first} -- #{results[1..-1].join(' ')}"
     end
-
-    head = results[0][0].ircify_html
-    text = results[0][1].ircify_html
-    m.reply "#{head} -- #{text}"
   end
 
   def wolfram(m, params)
@@ -438,47 +397,16 @@ class SearchPlugin < Plugin
     params[:firstpar] = @bot.config['wikipedia.first_par']
     return google(m, params)
   end
-
-  def gtime(m, params)
-    where = params[:words].to_s
-    where.sub!(/^\s*in\s*/, '')
-    searchfor = CGI.escape("time in " + where)
-    url = GOOGLE_SEARCH + searchfor
-
-    begin
-      html = @bot.httputil.get(url)
-    rescue => e
-      m.reply "Error googletiming #{where}"
-      return
-    end
-
-    debug html
-    results = html.scan(GOOGLE_TIME_RESULT)
-    debug "results: #{results.inspect}"
-
-    if results.length != 1
-      m.reply "Couldn't find the time for #{where} on Google"
-      return
-    end
-
-    time = results[0][0].ircify_html
-    m.reply "#{time}"
-  end
 end
 
 plugin = SearchPlugin.new
 
-  plugin.map "ddg *words", :action => 'duckduckgo', :threaded => true
-  plugin.map "search *words", :action => 'google', :threaded => true
-  plugin.map "google *words", :action => 'google', :threaded => true
-  plugin.map "lucky *words", :action => 'lucky', :threaded => true
-
-# Broken:
-plugin.map "gcount *words", :action => 'gcount', :threaded => true
-
+plugin.map "ddg *words", :action => 'duckduckgo', :threaded => true
+plugin.map "search *words", :action => 'google', :threaded => true
+plugin.map "google *words", :action => 'google', :threaded => true
+plugin.map "lucky *words", :action => 'lucky', :threaded => true
 plugin.map "gcalc *words", :action => 'gcalc', :threaded => true
 plugin.map "gdef *words", :action => 'gdef', :threaded => true
-plugin.map "gtime *words", :action => 'gtime', :threaded => true
 plugin.map "wa *words", :action => 'wolfram', :threaded => true
 plugin.map "wp :lang *words", :action => 'wikipedia', :requirements => { :lang => /^\w\w\w?$/ }, :threaded => true
 plugin.map "wp *words", :action => 'wikipedia', :threaded => true
