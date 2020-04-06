@@ -78,13 +78,17 @@ class PointsPlugin < Plugin
     op = nil
     ac = Hash.new
     m.message.split.each_with_index do |tok, i|
+      # ignore preceeding +/-
+      if op && arg.nil?
+        op = nil
+      end
       tok.sub!(/[:,]$/, '') if i == 0
       catch :me_if_you_can do
         if m.channel.users[tok].nil?
-          if (tok =~ /^(?:--)(.*[^-].*)$/) || (tok =~ /^(.*[^-].*)(?:--)$/)
+          if tok =~ /^(.*[^-].*)(?:--)$/
             op, arg = '--', $1
             next
-          elsif (tok =~ /^(?:\+\+)(.*[^+].*)$/)||(tok =~ /^(.*[^+].*)(?:\+\+)$/)
+          elsif tok =~ /^(.*[^+].*)(?:\+\+)$/
             op, arg = '++', $1
             next
           end

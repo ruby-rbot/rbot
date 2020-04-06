@@ -1,6 +1,7 @@
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 $:.unshift File.join(File.dirname(__FILE__), '..')
-
+#require 'rbot/logger'
+#Irc::Bot::LoggerManager.instance.set_level(5)
 
 module Irc
 class Bot
@@ -55,7 +56,7 @@ class MockMessage
   def initialize(message='', source='user')
     @message = message
     @sourcenick = source
-    @channel = Irc::Channel.new('#test', '', [], server: nil)
+    @channel = Irc::Channel.new('#test', '', ['bob'], server: nil)
     @replies = []
   end
 

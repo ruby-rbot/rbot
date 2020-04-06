@@ -11,6 +11,9 @@ module Irc
 class Bot
   class Language
 
+    # Access needed for tests:
+    attr_reader :strings
+
     # This constant hash holds the mapping
     # from long language names to the usual POSIX
     # locale specifications
