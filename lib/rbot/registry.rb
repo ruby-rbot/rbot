@@ -110,7 +110,7 @@ class Registry
     attr_accessor :recovery
 
     def initialize(filename)
-      debug 'init registry accessor for: ' + filename
+      debug "init registry accessor of #{self.class} for: #{filename}"
       @filename = filename
       @name = File.basename filename
       @registry = nil
