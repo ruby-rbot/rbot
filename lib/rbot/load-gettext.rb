@@ -101,7 +101,7 @@ end
         opts = {:with_messages => false, :with_paths => false, :out => STDOUT}.merge(options)
         ret = nil
         # this is for 2.1.0
-        TextDomainManager.each_textdomains(self) {|textdomain, lang|
+        TextDomainManager.each_text_domains(self) {|textdomain, lang|
           opts[:out].puts "TextDomain name: #{textdomain.name.inspect}"
           opts[:out].puts "TextDomain current locale: #{lang.to_s.inspect}"
           opts[:out].puts "TextDomain current mo path: #{textdomain.instance_variable_get(:@locale_path).current_path(lang).inspect}"
