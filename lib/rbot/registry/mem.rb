@@ -13,9 +13,20 @@ class Registry
 
   class MemAccessor < AbstractAccessor
 
+    def initialize(filename)
+      super(filename)
+      @data = {}
+    end
+
     def registry
       super
-      @registry = {}
+      @registry = @data
+    end
+
+    def close
+    end
+
+    def flush
     end
 
     def dbexists?
