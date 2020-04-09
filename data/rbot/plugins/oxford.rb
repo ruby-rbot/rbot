@@ -8,52 +8,59 @@
 # Copyright:: (C) 2006-2007 Giuseppe Bilotta
 # License:: GPL v2
 #
+require 'cgi'
 
 class OxfordPlugin < Plugin
-  Config.register Config::IntegerValue.new('oxford.hits',
-    :default => 3,
-    :desc => "Number of hits to return from a dictionary lookup")
-  Config.register Config::IntegerValue.new('oxford.first_par',
-    :default => 0,
-    :desc => "When set to n > 0, the bot will return the first paragraph from the first n dictionary hits")
+  Config.register Config::IntegerValue.new(
+    'oxford.max_lines',
+    :default => 1,
+    :desc => 'The number of lines to respond with.')
 
   def initialize
     super
-    @oxurl = "http://www.oxforddictionaries.com/definition/english/%s"
+    @base_url = "https://www.lexico.com"
   end
 
   def help(plugin, topic="")
-    'oxford <word>: check for <word> on the oxford english dictionary.'
+    'oxford <word>: check for <word> on the lexico english dictionary (powered by oxford english dictionary).'
   end
 
   def oxford(m, params)
-    justcheck = params[:justcheck]
-
     word = params[:word].join
-    [word, word + "_1"].each { |check|
-      url = @oxurl % CGI.escape(check)
-      if params[:british]
-        url << "?view=uk"
+
+    url = "#{@base_url}/definition/#{CGI.escape word}"
+
+    begin
+      response = @bot.httputil.get(url, resp: true)
+      definition = parse_definition(response)
+
+      if definition.empty?
+        closest = response.xpath('//div[@class="no-exact-matches"]//ul/li/a').first
+
+        url = @base_url + closest['href']
+
+        m.reply "did you mean: #{Bold}#{closest.content.ircify_html}#{NormalText}"
+
+        response = @bot.httputil.get(url, resp: true)
+        definition = parse_definition(response)
       end
-      h = @bot.httputil.get(url, :max_redir => 5)
-      if h
-	defs = h.split("<span class=\"definition\">")
-	defs = defs[1..-1].map {|d| d.split("</span>")[0]}
-        if defs.size == 0
-	  return false if justcheck
-	  m.reply "#{word} not found"
-	  return false
-	end
-	m.reply("#{word}: #{url}") unless justcheck
-	defn = defs[0]
-        m.reply("#{Bold}%s#{Bold}: %s" % [word, defn.ircify_html(:nbsp => :space)], :overlong => :truncate)
-        return true
-      end
-    }
+    rescue => e
+      m.reply "error accessing lexico url -> #{url}"
+      error e
+      return
+    end
+
+    if definition
+      m.reply definition.ircify_html, max_lines: @bot.config['oxford.max_lines']
+    else
+      m.reply "couldn't find a definition for #{word} on oxford dictionary"
+    end
   end
 
-  def is_british?(word)
-    return oxford(nil, :word => word, :justcheck => true, :british => true)
+  private
+
+  def parse_definition(r)
+    r.xpath('//section[@class="gramb"]//text()').map(&:content).join(' ')
   end
 end
 
