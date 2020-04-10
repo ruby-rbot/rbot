@@ -11,27 +11,22 @@
 #
 # TODO:: some sort of turn-basedness, maybe
 
+# https://www.wordgenerator.net/application/p.php?type=2&id=dictionary_words&spaceflag=false
+
 module RandomWord
-  SITE = "http://coyotecult.com/tools/randomwordgenerator.php"
+  SITE = 'https://www.wordgenerator.net/random-word-generator.php'
+  BASE_URL = 'https://www.wordgenerator.net/application/p.php'
 
-  def self.get(count=1)
-    res = Net::HTTP.post_form(URI.parse(SITE), {'numwords' => count})
-    raise _("random word generator site failed with #{res.code} - #{res.message}") unless Net::HTTPSuccess === res
-    words = res.body.scan(%r{<a.*?\?w=(.*?)\n}).flatten
+  # we could allow to specify by word types:  (defaults to all)
+  TYPES = {
+    all: 'dictionary_words',
+    noun: 'nouns',
+    adj: 'adjectives',
+    verb: 'action_verbs'
+  }
 
-    count == 1 ? words.first : words
-  end
-end
-
-module Google
-  URL   = "http://www.google.com/wml/search?hl=en&q=define:"
-  REGEX = %r{Web definitions for .*?<br/>(.*?)<br/>}
-
-  def self.define(phrase)
-    raw = Net::HTTP.get(URI.parse(URL+CGI.escape(phrase)))
-    res = raw.scan(REGEX).flatten.map { |e| e.ircify_html }
-
-    res.empty? ? false : res.last
+  def self.get(bot, type)
+    bot.httputil.get("#{BASE_URL}?type=1&id=#{TYPES[type]}&spaceflag=false", cache: false).split(',')
   end
 end
 
@@ -248,10 +243,8 @@ class HangmanPlugin < Plugin
               _("hangman play with wordlist <wordlist> => hangman with random word from <wordlist>")].join % { :site => RandomWord::SITE }
     when "stop"
       return _("hangman stop => quits the current game")
-    when "define"
-      return _("hangman define => seeks a definition for the previous answer using google")
     else
-      return _("hangman game plugin - topics: play, stop, define")
+      return _("hangman game plugin - topics: play, stop")
     end
   end
 
@@ -267,7 +260,7 @@ class HangmanPlugin < Plugin
 
       wordlist[rand(wordlist.size)]
     else # getting a random word
-      words = RandomWord::get(100)
+      words = RandomWord::get(@bot, :all)
 
       if adj = params[:adj]
         words = words.sort_by { |e| e.size }
@@ -394,7 +387,7 @@ class HangmanPlugin < Plugin
         }, :nick => true
 
         if rand(5).zero?
-          m.reply _("wondering what that means? try ´%{prefix}hangman define´") % {
+          m.reply _("wondering what that means? try ´%{prefix}oxford <word>´") % {
             :prefix => @bot.config['core.address_prefix'].first
           }
         end
@@ -477,18 +470,6 @@ class HangmanPlugin < Plugin
       score(m, params)
     end
   end
-
-  def define(m, params)
-    if game = @games.previous(m.replyto)
-      if res = Google.define(game.word)
-        m.reply "#{Bold}#{game.word}#{Bold} -- #{res}"
-      else
-        m.reply _("looks like google has no definition for %{word}") % { :word => game.word }
-      end
-    else
-      m.reply _("no hangman game was played here recently, what do you want me to define?")
-    end
-  end
 end
 
 plugin = HangmanPlugin.new
@@ -502,4 +483,3 @@ plugin.map "hangman stop", :action => 'stop'
 
 plugin.map "hangman score [:nick]", :action => 'score'
 plugin.map "hangman stats", :action => 'stats'
-plugin.map "hangman define", :action => 'define'
