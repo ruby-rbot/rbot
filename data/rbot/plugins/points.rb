@@ -109,7 +109,9 @@ class PointsPlugin < Plugin
     end
 
     ac.each do |k, v|
-      next if v == 0
+      next if v == 0 or /--|\+\+/.match(k)
+      # strip invisible formatting characters like bold or color codes
+      k = k.gsub(FormattingRx, '')
       @registry[k] += (v > 0 ? 1 : -1)
       m.reply @bot.lang.get("thanks") if k == @bot.nick && v > 0
       m.reply "#{k} now has #{@registry[k]} points!"
