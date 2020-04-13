@@ -474,15 +474,14 @@ module Irc
       @bot.ctcp_notice @source, @ctcp, string, options
     end
 
-    # convenience method to reply "okay" in the current language to the
-    # message
-    def plainokay
-      self.reply @bot.lang.get("okay"), :nick => false
+    # convenience method to reply a literal message in the current language to the message
+    def plain_literal(ident)
+      self.reply @bot.lang.get(ident), :nick => false
     end
 
     # Like the above, but append the username
-    def nickokay
-      str = @bot.lang.get("okay").dup
+    def nick_literal(ident)
+      str = @bot.lang.get(ident).dup
       if self.public?
         # remove final punctuation
         str.gsub!(/[!,.]$/,"")
@@ -492,9 +491,13 @@ module Irc
     end
 
     # the default okay style is the same as the default reply style
-    #
     def okay
-      @bot.config['core.reply_with_nick'] ? nickokay : plainokay
+      @bot.config['core.reply_with_nick'] ? nick_literal('okay') : plain_literal('okay')
+    end
+
+    # thanks the user in reply
+    def thanks
+      @bot.config['core.reply_with_nick'] ? nick_literal('thanks') : plain_literal('thanks')
     end
 
     # send a NOTICE to the message source

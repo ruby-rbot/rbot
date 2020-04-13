@@ -77,6 +77,10 @@ class MockMessage
     reply 'okay'
   end
 
+  def thanks
+    reply 'thanks :)'
+  end
+
   def public?
     true
   end
