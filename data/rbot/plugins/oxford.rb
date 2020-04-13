@@ -51,8 +51,10 @@ class OxfordPlugin < Plugin
           url = "#{@base_url}/search/dataset.js?dataset=noad&dictionary=en&query=#{CGI.escape word}"
           response = @bot.httputil.get(url, headers: {'X-Requested-With': 'XMLHttpRequest'})
           alternative = response.gsub(/\\/, '').scan(/href="([^"]+)">([^<]+)</)
-          url = @base_url + alternative.first[0]
-          title = alternative.first[1]
+          unless alternative.empty?
+            url = @base_url + alternative.first[0]
+            title = alternative.first[1]
+          end
         end
 
         debug "search for alternative spelling result, returned title=#{title.inspect} url=#{url.inspect}"
