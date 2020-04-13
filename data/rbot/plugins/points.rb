@@ -85,6 +85,9 @@ class PointsPlugin < Plugin
       token = $1  # strip ++/-- from token
       flag = $2  # remember ++/--
 
+      # token must not have more than one ++/--
+      next if token.match(/(\+\+|--)/)
+
       # each token must include at least one alphanumerical character
       next unless token.match /[[:alnum:]]/
 

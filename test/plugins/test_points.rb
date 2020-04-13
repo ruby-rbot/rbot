@@ -72,6 +72,8 @@ class PointsPluginTest < Test::Unit::TestCase
       ' --',
       '++ --',
       '-- ++',
+      '+rw+r++r++',
+      '-rw-r--r--',
       'https://linux.slashdot.org/story/20/04/12/2138205/how-red-hats-new-ceo-handles-life-under-ibm----and-a-global-pandemic'
     ]
     ignored.each do |ignore|
