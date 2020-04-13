@@ -73,49 +73,35 @@ class PointsPlugin < Plugin
   end
 
   def message(m)
-    return unless m.public? && m.message.match(/\+\+|--/)
-    arg = nil
-    op = nil
-    ac = Hash.new
-    m.message.split.each_with_index do |tok, i|
-      # ignore preceeding +/-
-      if op && arg.nil?
-        op = nil
-      end
-      tok.sub!(/[:,]$/, '') if i == 0
-      catch :me_if_you_can do
-        if m.channel.users[tok].nil?
-          if tok =~ /^(.*[^-].*)(?:--)$/
-            op, arg = '--', $1
-            next
-          elsif tok =~ /^(.*[^+].*)(?:\+\+)$/
-            op, arg = '++', $1
-            next
-          end
-        end
+    return unless m.public? and m.message.match(/\+\+|--/)
 
-        if (tok =~ /^--+$/) || (tok =~ /^\+\++$/)
-          op = tok.slice(0, 2)
-        else
-          arg = tok
-        end
-      end # catch
+    votes = Hash.new { |h,k| h[k] = 0 }  # defaulting to zero
+    m.message.split(' ').each do |token|
+      # remove any color codes from the token
+      token = token.gsub(FormattingRx, '')
 
-      if op && arg
-        ac[arg] ||= 0
-        ac[arg] += (op == '--' ? -1 : 1) unless arg.downcase == m.sourcenick.downcase
-        op = arg = nil
-      end
+      # each token must end with ++ or --
+      next unless token.match(/^(.*)(\+\+|--)$/)
+      token = $1  # strip ++/-- from token
+      flag = $2  # remember ++/--
+
+      # each token must include at least one alphanumerical character
+      next unless token.match /[[:alnum:]]/
+
+      # ignore assigning points to oneself
+      next if token.downcase == m.sourcenick.downcase
+
+      votes[token] += flag == '++' ? 1 : -1
     end
 
-    ac.each do |k, v|
-      next if v == 0 or /--|\+\+/.match(k)
-      # strip invisible formatting characters like bold or color codes
-      k = k.gsub(FormattingRx, '')
-      next if k.downcase == m.sourcenick.downcase
-      @registry[k] += (v > 0 ? 1 : -1)
-      m.reply @bot.lang.get("thanks") if k == @bot.nick && v > 0
-      m.reply "#{k} now has #{@registry[k]} points!"
+    votes.each do |token, points|
+      @registry[token] += points
+
+      if token == @bot.nick and points > 0
+        m.thanks
+      end
+
+      m.reply "#{token} now has #{@registry[token]} points!"
     end
   end
 end

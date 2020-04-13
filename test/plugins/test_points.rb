@@ -49,6 +49,13 @@ class PointsPluginTest < Test::Unit::TestCase
     @plugin.message(m)
     assert_equal('alice now has 1 points!', m.replies.first)
 
+    # assign to multiple things
+    m = MockMessage.new('hello linux++ hello torvalds++', 'user')
+    @plugin.message(m)
+    assert_equal(m.replies.length, 2)
+    assert_equal('linux now has 3 points!', m.replies[0])
+    assert_equal('torvalds now has 1 points!', m.replies[1])
+
     ignored = [
       '++alice',
       '--alice',
@@ -56,6 +63,16 @@ class PointsPluginTest < Test::Unit::TestCase
       'ls --sort time',
       '-- foo',
       '++ foo',
+      'test ++',
+      'test --',
+      '<-- pointing',
+      'pointing -->',
+      '&++',
+      ' ++',
+      ' --',
+      '++ --',
+      '-- ++',
+      'https://linux.slashdot.org/story/20/04/12/2138205/how-red-hats-new-ceo-handles-life-under-ibm----and-a-global-pandemic'
     ]
     ignored.each do |ignore|
       m = MockMessage.new(ignore, 'user')
@@ -69,6 +86,6 @@ class PointsPluginTest < Test::Unit::TestCase
 
     m = MockMessage.new('bot++', 'user')
     @plugin.message(m)
-    assert_include(MockBot.new.lang.strings['thanks'], m.replies.first)
+    assert_equal('thanks :)', m.replies.first)
   end
 end
