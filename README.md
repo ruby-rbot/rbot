@@ -1,5 +1,7 @@
 # Rbot - The Ruby IRC Bot
 
+[![Build Status](https://travis-ci.org/ruby-rbot/rbot.svg?branch=master)](https://travis-ci.org/ruby-rbot/rbot)
+
 rbot is designed around a flexible plugin system and is not only easy to
 extend, but it already includes many useful plugins. Some of the powerful
 features include:
