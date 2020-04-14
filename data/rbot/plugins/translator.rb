@@ -34,9 +34,10 @@ class Translator
 
   attr_reader :directions, :cache
 
-  def initialize(directions, cache={})
+  def initialize(directions, cache={}, bot)
     @directions = directions
     @cache = cache
+    @bot = bot
   end
 
   # Many translators use Mechanize, which changed namespace around version 1.0
@@ -121,9 +122,9 @@ class GoogleTranslator < Translator
     ga it ja kn kk km ko lv lt mk ms ml mt mr mn ne no or ps fa pl
     pt_PT pa ro ru sa sr sd si sk sl es sw sv tg ta tl te th bo tr
     uk ur uz ug vi cy yi auto]
-  def initialize(cache={})
+  def initialize(cache={}, bot)
     require 'mechanize'
-    super(Translator::Direction.all_to_all(LANGUAGES), cache)
+    super(Translator::Direction.all_to_all(LANGUAGES), cache, bot)
   end
 
   def do_translate(text, from, to)
@@ -145,14 +146,14 @@ class YandexTranslator < Translator
 
   URL = 'https://translate.yandex.net/api/v1.5/tr.json/translate?key=%s&lang=%s-%s&text=%s'
   KEY = 'trnsl.1.1.20140326T031210Z.1e298c8adb4058ed.d93278fea8d79e0a0ba76b6ab4bfbf6ac43ada72'
-  def initialize(cache)
+  def initialize(cache, bot)
     require 'uri'
     require 'json'
-    super(Translator::Direction.all_to_all(LANGUAGES), cache)
+    super(Translator::Direction.all_to_all(LANGUAGES), cache, bot)
   end
 
   def translate(text, from, to)
-    res = Irc::Utils.bot.httputil.get_response(URL % [KEY, from, to, URI.escape(text)])
+    res = @bot.httputil.get_response(URL % [KEY, from, to, URI.escape(text)])
     res = JSON.parse(res.body)
 
     if res['code'] != 200

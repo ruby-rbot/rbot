@@ -50,6 +50,7 @@ require 'rbot/registry'
 require 'rbot/plugins'
 require 'rbot/message'
 require 'rbot/language'
+require 'rbot/httputil'
 
 module Irc
 
@@ -471,6 +472,7 @@ class Bot
 
     @plugins = nil
     @lang = Language.new(self, @config['core.language'])
+    @httputil = Utils::HttpUtil.new(self)
 
     begin
       @auth = Auth::manager
@@ -1236,6 +1238,7 @@ class Bot
           debug "\tignoring cleanup error: #{$!}"
         end
       end
+      @httputil.cleanup
       # debug "\tstopping timers ..."
       # @timer.stop
       # debug "Closing registries"

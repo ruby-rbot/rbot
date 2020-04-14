@@ -15,15 +15,15 @@ require 'rexml/document'
 
 # Wraps NOAA National Weather Service information
 class CurrentConditions
-  @@bot = Irc::Utils.bot
-    def initialize(station)
+    def initialize(station, bot)
         @station = station
+        @bot = bot
         @url = "http://www.nws.noaa.gov/data/current_obs/#{URI.encode @station.upcase}.xml"
         @current_conditions = String.new
     end
     def update
       begin
-        resp = @@bot.httputil.get_response(@url)
+        resp = @bot.httputil.get_response(@url)
         case resp
         when Net::HTTPSuccess
           cc_doc = (REXML::Document.new resp.body).root
@@ -161,7 +161,7 @@ class WeatherPlugin < Plugin
     if @nws_cache.has_key?(where) then
         met = @nws_cache[where]
     else
-        met = CurrentConditions.new(where)
+        met = CurrentConditions.new(where, @bot)
     end
     if met
       begin

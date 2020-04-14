@@ -20,7 +20,7 @@ module ::GeoIP
     hostname =~ Resolv::IPv4::Regex && (hostname.split(".").map { |e| e.to_i }.max <= 255)
   end
 
-  def self.geoiptool(ip)
+  def self.geoiptool(bot, ip)
     url = "http://www.geoiptool.com/en/?IP="
     regexes  = {
       :country => %r{Country:.*?<a href=".*?" target="_blank"> (.*?)</a>}m,
@@ -30,7 +30,7 @@ module ::GeoIP
       :lon     => %r{Longitude:.*?<td align="left" class="arial_bold">(.*?)</td>}m
     }
     res = {}
-    raw = Irc::Utils.bot.httputil.get_response(url+ip)
+    raw = bot.httputil.get_response(url+ip)
     raw = raw.decompress_body(raw.raw_body)
 
     regexes.each { |key, regex| res[key] = raw.scan(regex).join('') }
@@ -40,8 +40,8 @@ module ::GeoIP
 
   IPINFODB_URL = "http://api.ipinfodb.com/v2/ip_query.php?key=%{key}&ip=%{ip}"
 
-  def self.ipinfodb(ip)
-    key = Irc::Utils.bot.config['geoip.ipinfodb_key']
+  def self.ipinfodb(bot, ip)
+    key = bot.config['geoip.ipinfodb_key']
     return if not key or key.empty?
     url = IPINFODB_URL % {
       :ip => ip,
@@ -49,7 +49,7 @@ module ::GeoIP
     }
     debug "Requesting #{url}"
 
-    xml = Irc::Utils.bot.httputil.get(url)
+    xml = bot.httputil.get(url)
 
     if xml
       obj = REXML::Document.new(xml)
@@ -67,11 +67,11 @@ module ::GeoIP
   end
 
   JUMP_TABLE = {
-    "ipinfodb" => Proc.new { |ip| ipinfodb(ip) },
-    "geoiptool" => Proc.new { |ip| geoiptool(ip) },
+    "ipinfodb" => Proc.new { |bot, ip| ipinfodb(bot, ip) },
+    "geoiptool" => Proc.new { |bot, ip| geoiptool(bot, ip) },
   }
 
-  def self.resolve(hostname, api)
+  def self.resolve(bot, hostname, api)
     raise InvalidHostError unless valid_host?(hostname)
 
     begin
@@ -82,7 +82,7 @@ module ::GeoIP
 
     raise BadAPIError unless JUMP_TABLE.key?(api)
 
-    return JUMP_TABLE[api].call(ip)
+    return JUMP_TABLE[api].call(bot, ip)
   end
 end
 
@@ -179,7 +179,7 @@ class GeoIpPlugin < Plugin
     begin
       apis = @bot.config['geoip.sources']
       apis.compact.each { |api|
-        geo = GeoIP::resolve(host, api)
+        geo = GeoIP::resolve(@bot, host, api)
         if geo and geo[:country] != ""
           break
         end

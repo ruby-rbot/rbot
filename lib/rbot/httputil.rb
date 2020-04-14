@@ -726,20 +726,3 @@ class HttpUtil
 end
 end
 end
-
-class HttpUtilPlugin < CoreBotModule
-  def initialize(*a)
-    super(*a)
-    debug 'initializing httputil'
-    @bot.httputil = Irc::Utils::HttpUtil.new(@bot)
-  end
-
-  def cleanup
-    debug 'shutting down httputil'
-    @bot.httputil.cleanup
-    @bot.httputil = nil
-    super
-  end
-end
-
-HttpUtilPlugin.new
