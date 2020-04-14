@@ -40,15 +40,6 @@ class Translator
     @bot = bot
   end
 
-  # Many translators use Mechanize, which changed namespace around version 1.0
-  # To support both pre-1.0 and post-1.0 namespaces, we use these auxiliary
-  # method. The translator still needs to require 'mechanize' on initialization
-  # if it needs it.
-  def mechanize
-    return Mechanize if defined? Mechanize
-    return WWW::Mechanize
-  end
-
   # whether the translator supports this direction
   def support?(from, to)
     from != to && @directions[from].include?(to)
@@ -112,34 +103,6 @@ class Translator
   end
 end
 
-class GoogleTranslator < Translator
-  INFO = 'Google Translate <http://www.google.com/translate_t>'
-  URL = 'https://translate.google.com/'
-
-  LANGUAGES =
-    %w[af sq am ar hy az eu be bn bh bg my ca chr zh zh_CN zh_TW hr
-    cs da dv en eo et tl fi fr gl ka de el gn gu iw hi hu is id iu
-    ga it ja kn kk km ko lv lt mk ms ml mt mr mn ne no or ps fa pl
-    pt_PT pa ro ru sa sr sd si sk sl es sw sv tg ta tl te th bo tr
-    uk ur uz ug vi cy yi auto]
-  def initialize(cache={}, bot)
-    require 'mechanize'
-    super(Translator::Direction.all_to_all(LANGUAGES), cache, bot)
-  end
-
-  def do_translate(text, from, to)
-    agent = Mechanize.new
-    agent.user_agent_alias = 'Linux Mozilla'
-    page = agent.get URL
-    form = page.form_with(:id => 'gt-form')
-    form.sl = from
-    form.tl = to
-    form.text = text
-    page = form.submit
-    return page.search('#result_box span').first.content
-  end
-end
-
 class YandexTranslator < Translator
   INFO = 'Yandex Translator <http://translate.yandex.com/>'
   LANGUAGES = %w{ar az be bg ca cs da de el en es et fi fr he hr hu hy it ka lt lv mk nl no pl pt ro ru sk sl sq sr sv tr uk}
@@ -174,7 +137,6 @@ class TranslatorPlugin < Plugin
     :desc => _("Default destination language to be used with translate command"))
 
   TRANSLATORS = {
-    'google_translate' => GoogleTranslator,
     'yandex' => YandexTranslator,
   }
 
@@ -184,7 +146,7 @@ class TranslatorPlugin < Plugin
     @translators = {}
     TRANSLATORS.each_pair do |name, c|
       watch_for_fail(name) do
-        @translators[name] = c.new(@registry.sub_registry(name))
+        @translators[name] = c.new(@registry.sub_registry(name), @bot)
         map "#{name} :from :to *phrase",
           :action => :cmd_translate, :thread => true
       end
@@ -275,20 +237,7 @@ class TranslatorPlugin < Plugin
     if translator
       cmd_translate m, params.merge({:translator => translator, :show_provider => false})
     else
-      # When translate command is used without source language, "auto" as source
-      # language is assumed. It means that google translator is used and we let google
-      # figure out what the source language is.
-      #
-      # Problem is that the google translator will fail if the system that the bot is
-      # running on does not have the json gem installed.
-      if params[:from] == 'auto'
-        m.reply _("Unable to auto-detect source language due to broken google translator, see %{reverse}%{prefix}help translate failed%{reverse} for details") % {
-          :reverse => Reverse,
-          :prefix => @bot.config['core.address_prefix'].first
-        }
-      else
-        m.reply _('None of the default translators (translator.default_list) supports translating from %{source} to %{target}') % {:source => params[:from], :target => params[:to]}
-      end
+      m.reply _('None of the default translators (translator.default_list) supports translating from %{source} to %{target}') % {:source => params[:from], :target => params[:to]}
     end
   end
 
