@@ -164,8 +164,6 @@ module ::Net
   end
 end
 
-Net::HTTP.version_1_2
-
 module ::Irc
 module Utils
 
