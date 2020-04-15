@@ -269,9 +269,9 @@ class WheelOfFortune < Plugin
     end
     name = p[:name].to_s
     if name.empty?
-      name = m.source.get_botdata("wheelfortune.game_name") || @bot.config['wheelfortune.game_name']
+      name = @registry["game_name_#{m.source.to_s}"] || @bot.config['wheelfortune.game_name']
     else
-      m.source.set_botdata("wheelfortune.game_name", name.dup)
+      @registry["game_name_#{m.source.to_s}"] = name
     end
     @games[ch] = game = WoFGame.new(name, m.botuser, p[:single], p[:max])
     @bot.say chan, _("%{who} just created a new %{name} game to %{max} points (%{single} per question, %{price} per vowel)") % {
