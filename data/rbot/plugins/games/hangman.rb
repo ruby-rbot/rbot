@@ -253,7 +253,7 @@ class HangmanPlugin < Plugin
       params[:word].join(" ")
     elsif params[:wordlist]
       begin
-        wordlist = Wordlist.get(params[:wordlist].join("/"), :spaces => true)
+        wordlist = Wordlist.get(@bot, params[:wordlist].join("/"), :spaces => true)
       rescue
         raise _("no such wordlist")
       end

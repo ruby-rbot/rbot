@@ -10,11 +10,8 @@ require "find"
 module ::Irc
 class Bot
 class Wordlist
-  def self.wordlist_base
-    @@wordlist_base ||= Utils.bot.path 'wordlists'
-  end
-
-  def self.get(where, options={})
+  def self.get(bot, where, options={})
+    wordlist_base = bot.path('wordlists')
     opts = { :spaces => false }.merge(options)
 
     wordlist_path = File.join(wordlist_base, where)
@@ -44,21 +41,23 @@ class Wordlist
   # Return an array with the list of available wordlists.
   # Available options:
   # pattern:: pattern that should be matched by the wordlist filename
-  def self.list(options={})
+  def self.list(bot, options={})
+    wordlist_base = bot.path('wordlists')
     pattern = options[:pattern] || "**"
     # refuse patterns that contain ../
     return [] if pattern =~ /\.\.\//
-    striplen = self.wordlist_base.length+1
-    Dir.glob(File.join(self.wordlist_base, pattern)).map { |name|
+    striplen = wordlist_base.length+1
+    Dir.glob(File.join(wordlist_base, pattern)).map { |name|
       name[striplen..-1]
     }
   end
 
-  def self.exist?(path)
+  def self.exist?(bot, path)
+    wordlist_base = bot.path('wordlists')
     fn = path.to_s
     # refuse to check outside of the wordlist base directory
     return false if fn =~ /\.\.\//
-    File.exist?(File.join(self.wordlist_base, fn))
+    File.exist?(File.join(wordlist_base, fn))
   end
 
 end

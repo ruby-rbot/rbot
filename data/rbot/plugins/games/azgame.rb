@@ -157,9 +157,9 @@ class AzGamePlugin < Plugin
     lang = params[:lang]
     addlang = params[:addlang]
     autoadd = @autoadd_base + addlang.to_s
-    if Wordlist.exist?(lang)
+    if Wordlist.exist?(@bot, lang)
       # wordlists are assumed to be UTF-8, but we need to strip the BOM, if present
-      words = Wordlist.get(lang)
+      words = Wordlist.get(@bot, lang)
       if addlang and File.exist?(autoadd)
         word += File.readlines(autoadd).map {|line| line.sub("\xef\xbb\xbf",'').strip}
       end
@@ -600,7 +600,7 @@ class AzGamePlugin < Plugin
       return _("az => start a game if none is running, show the current word range otherwise; you can say 'az <language>' if you want to play in a language different from the current bot default")
     end
     langs = @rules.keys
-    wls = Wordlist.list
+    wls = Wordlist.list(@bot)
     return [
       _("az topics: play, rules, cancel, manage, check"),
       _("available languages: %{langs}") % { :langs => langs.join(", ") },

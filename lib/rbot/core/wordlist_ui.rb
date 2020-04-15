@@ -11,12 +11,14 @@ class WordlistModule < CoreBotModule
   end
 
   def do_list(m, p)
-    found = Wordlist.list(p)
+    found = Wordlist.list(@bot, p)
     if found.empty?
-      m.reply _("no wordlist found")
+      m.reply _("no wordlists found in %{path}") % {
+        path: @bot.path('wordlists')
+      }
     else
       m.reply _("Wordlists: %{found}") % {
-        :found => found.sort.join(', ')
+        found: found.sort.join(', ')
       }
     end
   end
