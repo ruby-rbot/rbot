@@ -28,58 +28,61 @@
 class LartPlugin < Plugin
 
   def initialize
-    @larts = Array.new
-    @praises = Array.new
-    @lartfile = ""
-    @praisefile = ""
-    @changed = false
+    @larts = nil
+    @praises = nil
+
     super
+    # after intialization #set_language is called with the language set in the bot configuration
+    # this loads the larts/praises from the registry
+  end
+
+  def load_static_files(path, suffix)
+    entries = {}
+    Dir.glob("#{path}/#{suffix}-*").each { |filename|
+      language = filename[filename.rindex('-')+1..-1]
+      entries[language] = File.readlines(filename).map(&:chomp)
+    }
+    entries
   end
 
   def set_language(lang)
     save
 
-    # We may be on an old installation, so on the first run read non-language-specific larts
-    unless defined?(@oldlart)
-      @oldlart = datafile 'larts'
-      @oldpraise = datafile 'praise'
+    @lang = lang
+    @larts = @registry[:larts]
+    @praises = @registry[:praises]
+
+    # for migrations try to read lart from bot data first (this is usually in ~/.rbot/lart:
+    if not @larts or not @praises
+      log "migrate existing larts or praises from #{datafile}"
+
+      @larts = load_static_files(datafile, 'larts')
+      @praises = load_static_files(datafile, 'praises')
     end
 
-    @lartfile.replace(datafile("larts-#{lang}"))
-    @praisefile.replace(datafile("praises-#{lang}"))
-    @larts.clear
-    @praises.clear
-    if File.exists? @lartfile
-      IO.foreach(@lartfile) { |line|
-        @larts << line.chomp
-      }
-    elsif File.exists? @oldlart
-      IO.foreach(@oldlart) { |line|
-        @larts << line.chomp
-      }
+    # without migrations, the initial data files we load from is located in the plugin directory
+    # that is the directory in which the plugin file itself is located (.../data/rbot/plugins/ usually)
+    if not @larts or not @praises
+      log "load initial larts and praises from #{plugin_path}"
+
+      initial_path = File.join(plugin_path, 'lart')
+      @larts = load_static_files(initial_path, 'larts')
+      @praises = load_static_files(initial_path, 'praises')
     end
-    if File.exists? @praisefile
-      IO.foreach(@praisefile) { |line|
-        @praises << line.chomp
-      }
-    elsif File.exists? @oldpraise
-      IO.foreach(@oldpraise) { |line|
-        @praises << line.chomp
-      }
-    end
-    @changed = false
+  end
+
+  def larts
+    @larts[@lang]
+  end
+
+  def praises
+    @praises[@lang]
   end
 
   def save
-    return unless @changed
-    Dir.mkdir(datafile) unless FileTest.directory? datafile
-    Utils.safe_save(@lartfile) { |file|
-      file.puts @larts
-    }
-    Utils.safe_save(@praisefile) { |file|
-      file.puts @praises
-    }
-    @changed = false
+    @registry[:larts] = @larts
+    @registry[:praises] = @praises
+    @registry.flush
   end
 
   def help(plugin, topic="")
@@ -87,7 +90,7 @@ class LartPlugin < Plugin
   end
 
   def handle_lart(m, params)
-    lart = @larts[get_msg_idx(@larts.length)]
+    lart = larts[get_msg_idx(larts.length)]
     if not lart
       m.reply "I dunno any larts"
       return
@@ -108,7 +111,7 @@ class LartPlugin < Plugin
   end
 
   def handle_praise(m, params)
-    praise = @praises[get_msg_idx(@praises.length)]
+    praise = praises[get_msg_idx(praises.length)]
     if not praise
       m.reply "I dunno any praises"
       return
@@ -128,20 +131,20 @@ class LartPlugin < Plugin
   end
 
   def handle_addlart(m, params)
-    @larts << params[:lart].to_s
+    @larts[@lang] << params[:lart].to_s
     @changed = true
     m.okay
   end
 
   def handle_rmlart(m, params)
-    @larts.delete params[:lart].to_s
+    @larts[@lang].delete params[:lart].to_s
     @changed = true
     m.okay
   end
 
   def handle_listlart(m, params)
     rx = Regexp.new(params[:lart].to_s, true)
-    list = @larts.grep(rx)
+    list = larts.grep(rx)
     unless list.empty?
       m.reply list.join(" | "), :split_at => /\s+\|\s+/
     else
@@ -150,20 +153,20 @@ class LartPlugin < Plugin
   end
 
   def handle_addpraise(m, params)
-    @praises << params[:praise].to_s
+    @praises[@lang] << params[:praise].to_s
     @changed = true
     m.okay
   end
 
   def handle_rmpraise(m, params)
-    @praises.delete params[:praise].to_s
+    @praises[@lang].delete params[:praise].to_s
     @changed = true
     m.okay
   end
 
   def handle_listpraise(m, params)
     rx = Regexp.new(params[:praise].to_s, true)
-    list = @praises.grep(rx)
+    list = praises.grep(rx)
     unless list.empty?
       m.reply list.join(" | "), :split_at => /\s+\|\s+/
     else
@@ -177,7 +180,7 @@ class LartPlugin < Plugin
   end
 
   def get_msg_idx(max)
-    idx = rand(max)
+    rand(max)
   end
 
 end
