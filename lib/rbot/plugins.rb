@@ -161,6 +161,9 @@ module Plugins
     # the message map handler
     attr_reader :handler
 
+    # the directory in which the plugin is located
+    attr_reader :plugin_path
+
     # Initialise your bot module. Always call super if you override this method,
     # as important variables are set up for you:
     #
@@ -191,6 +194,7 @@ module Plugins
       @registry = @bot.registry_factory.create(@bot.path, self.class.to_s.gsub(/^.*::/, ''))
 
       @manager.add_botmodule(self)
+      @plugin_path = @manager.next_plugin_path
       if self.respond_to?('set_language')
         self.set_language(@bot.lang.language)
       end
@@ -413,6 +417,7 @@ module Plugins
 
     attr_reader :core_module_dirs
     attr_reader :plugin_dirs
+    attr_reader :next_plugin_path
 
     # This is the list of patterns commonly delegated to plugins.
     # A fast delegation lookup is enabled for them.
@@ -610,7 +615,13 @@ module Plugins
       begin
         plugin_string = IO.read(fname)
         debug "loading #{desc}#{fname}"
+
+        # set path of the plugin that will be loaded next (see BotModule#initialize)
+        @next_plugin_path = File.dirname fname
+
         plugin_module.module_eval(plugin_string, fname)
+
+        @next_plugin_path = nil
 
         return :loaded
       rescue Exception => err
