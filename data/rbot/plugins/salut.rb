@@ -10,45 +10,89 @@
 # Salutations plugin: respond to salutations
 #
 # TODO:: allow online editing of salutations
-#
-# TODO:: *REMEMBER* to set @changed to true after edit or changes won't be saved
 
 class SalutPlugin < Plugin
   Config.register Config::BooleanValue.new('salut.all_languages',
     :default => true,
     :desc => "Check for a salutation in all languages and not just in the one defined by core.language",
-    :on_change => Proc.new {|bot, v| bot.plugins['salut'].reload}
-  )
+    :on_change => Proc.new {|bot, v| bot.plugins['salut'].reload})
+
   Config.register Config::BooleanValue.new('salut.address_only',
     :default => true,
     :desc => "When set to true, the bot will only reply to salutations directed at him",
-    :on_change => Proc.new {|bot, v| bot.plugins['salut'].reload}
-  )
-
+    :on_change => Proc.new {|bot, v| bot.plugins['salut'].reload})
 
   def initialize
-    @salutations = Hash.new
+    super
+
     @match = Hash.new
     @match_langs = Array.new
-    @main_lang_str = nil
-    @main_lang = nil
-    @all_langs = true
-    @changed = false
-    super
+
     reload
   end
 
-  def set_language(what)
-    reload
+  def set_language(language)
+    @language = language
+  end
+
+  def load_static_files(path)
+    debug "loading salutation rules from #{path}"
+    Dir.glob("#{path}/*").map { |filename|
+      language = filename[filename.rindex('-')+1..-1]
+      begin
+        salutations = {}
+        content = YAML::load_file(filename)
+        content.each { |key, val|
+          salutations[key.to_sym] = val
+        }
+      rescue
+        error "failed to read salutations in #{filename}: #{$!}"
+      end
+      [language, salutations]
+    }.to_h
+  end
+
+  def reload
+    @salutations = @registry[:salutations]
+
+    # migrate existing data files
+    if not @salutations and Dir.exists? datafile
+      log "migrate existing salutations from #{datafile}"
+
+      @salutations = load_static_files(datafile)
+    end
+
+    # load initial salutations from plugin directory
+    unless @salutations
+      log "load initial salutations from #{plugin_path}"
+
+      initial_path = File.join(plugin_path, 'salut')
+      @salutations = load_static_files(initial_path)
+    end
+
+    debug @salutations.inspect
+
+    create_match
+  end
+
+  def save
+    return unless @salutations
+
+    @registry[:salutations] = @salutations
+
+    @registry.flush
   end
 
   def create_match
+    use_all_languages = @bot.config['salut.all_languages']
+
     @match.clear
     ar_dest = Array.new
     ar_in = Array.new
     ar_out = Array.new
     ar_both = Array.new
     @salutations.each { |lang, hash|
+      next if lang != @language and not use_all_languages
       ar_dest.clear
       ar_in.clear
       ar_out.clear
@@ -83,8 +127,8 @@ class SalutPlugin < Plugin
 
     # Languages to match for, in order
     @match_langs.clear
-    @match_langs << @main_lang if @match.key?(@main_lang)
-    @match_langs << :english if @match.key?(:english)
+    @match_langs << @language if @match.key?(@language)
+    @match_langs << 'english' if @match.key?('english')
     @match.each_key { |key|
       @match_langs << key
     }
@@ -129,7 +173,6 @@ class SalutPlugin < Plugin
     lang = salut[1]
     k = salut[2]
     debug "Replying to #{salut.first} (#{lang} #{k}) in the #{time}"
-    # salut_ar = @salutations[@main_lang].update @salutations[:english].update @salutations[lang]
     salut_ar = @salutations[lang]
     case k
     when :both
@@ -160,67 +203,6 @@ class SalutPlugin < Plugin
     debug "Replying #{choice}"
     m.reply choice, :nick => false, :to => :public
   end
-
-  def reload
-    save
-    @main_lang_str = @bot.config['core.language']
-    @main_lang = @main_lang_str.to_sym
-    @all_langs = @bot.config['salut.all_languages']
-    if @all_langs
-      # Get all available languages
-      langs = Dir.new(datafile).collect {|f|
-        f =~ /salut-([^.]+)/ ? $1 : nil
-      }.compact
-      langs.each { |lang|
-        @salutations[lang.to_sym] = load_lang(lang)
-      }
-    else
-      @salutations.clear
-      @salutations[@main_lang] = load_lang(@main_lang_str)
-    end
-    create_match
-    @changed = false
-  end
-
-  def load_lang(lang)
-    dir = datafile
-    if not File.exist?(dir)
-      Dir.mkdir(dir)
-    end
-    file = File.join dir, "salut-#{lang}"
-    if File.exist?(file)
-      begin
-        salutations = Hash.new
-        content = YAML::load_file(file)
-        content.each { |key, val|
-          salutations[key.to_sym] = val
-        }
-        return salutations
-      rescue
-        error "failed to read salutations in #{lang}: #{$!}"
-      end
-    end
-    return nil
-  end
-
-  def save
-    return if @salutations.empty?
-    return unless @changed
-    @salutations.each { |lang, val|
-      l = lang.to_s
-      save_lang(lang, val)
-    }
-    @changed = false
-  end
-
-  def save_lang(lang, val)
-    fn = datafile "salut-#{lang}"
-    Utils.safe_save(fn) { |file|
-      file.puts val.to_yaml
-    }
-  end
-
 end
 
-plugin = SalutPlugin.new
-
+SalutPlugin.new
