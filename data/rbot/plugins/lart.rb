@@ -53,7 +53,7 @@ class LartPlugin < Plugin
     @praises = @registry[:praises]
 
     # for migrations try to read lart from bot data first (this is usually in ~/.rbot/lart:
-    if not @larts or not @praises
+    if (not @larts or not @praises) and Dir.exists? datafile
       log "migrate existing larts or praises from #{datafile}"
 
       @larts = load_static_files(datafile, 'larts')
@@ -80,8 +80,11 @@ class LartPlugin < Plugin
   end
 
   def save
+    return unless @larts
+
     @registry[:larts] = @larts
     @registry[:praises] = @praises
+
     @registry.flush
   end
 
