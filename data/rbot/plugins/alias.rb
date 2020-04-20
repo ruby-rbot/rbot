@@ -38,32 +38,29 @@ class AliasPlugin < Plugin
 
   def initialize
     super
-    @data_path = datafile
-    @data_file = File.join(@data_path, 'aliases.yaml')
-    # hash of alias => command entries
-    data = nil
-    aliases = if File.exist?(@data_file) &&
-                 (data = YAML.load_file(@data_file)) &&
-                 data.respond_to?(:each_pair)
-                data
-              else
-                warning _("Data file is not found or corrupt, reinitializing data")
-                Hash.new
-               end
-    @aliases = Hash.new
-    aliases.each_pair do |a, c|
-      begin
-        add_alias(a, c)
-      rescue AliasDefinitionError
-	warning _("Invalid alias entry %{alias} : %{command} in %{filename}: %{reason}") %
-                {:alias => a, :command => c, :filename => @data_file, :reason => $1}
+    @aliases = @registry[:aliases]
+    unless @aliases
+      # attempt to load aliases from data file yaml
+      filename = File.join(datafile, 'aliases.yaml')
+      if File.exists? filename
+        begin
+          @aliases = {}
+          YAML.load_file(filename).each_pair do |a, c|
+            add_alias(a, c)
+          end
+        rescue
+          warning _("Data file is not found or corrupt, reinitializing data")
+          @aliases = {}
+        end
+      else
+        @aliases = {}
       end
     end
   end
 
   def save
-    FileUtils.mkdir_p(@data_path)
-    Utils.safe_save(@data_file) {|f| f.write @aliases.to_yaml}
+    @registry[:aliases] = @aliases
+    @registry.flush
   end
 
   def cmd_add(m, params)
