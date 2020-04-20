@@ -14,48 +14,31 @@ class QuotePlugin < Plugin
 
   def initialize
     super
-    @lists = Hash.new
-    @changed = Hash.new
-    Dir[datafile('*')].each {|f|
-      next if File.directory?(f)
-      channel = File.basename(f)
-      @lists[channel] = Array.new if(!@lists.has_key?(channel))
-      IO.foreach(f) {|line|
-        if(line =~ /^(\d+) \| ([^|]+) \| (\S+) \| (.*)$/)
-          num = $1.to_i
-          @lists[channel][num] = Quote.new(num, $2, $3, $4)
+    @lists = @registry[:lists]
+    unless @lists
+      @lists = {}
+      # migrate quotes from existing quote files in data directory
+      Dir[datafile('*')].each do |f|
+        next if File.directory?(f)
+        channel = File.basename(f)
+        @lists[channel] = Array.new if not @lists.has_key?(channel)
+        IO.foreach(f) do |line|
+          if(line =~ /^(\d+) \| ([^|]+) \| (\S+) \| (.*)$/)
+            num = $1.to_i
+            @lists[channel][num] = Quote.new(num, $2, $3, $4)
+          end
         end
-      }
-      @changed[channel] = false
-    }
+      end
+    end
   end
 
   def save
-    Dir.mkdir(datafile) unless FileTest.directory? datafile
-    @lists.each {|channel, quotes|
-      begin
-        if @changed[channel]
-          debug "Writing new quotefile for channel #{channel} ..."
-          Utils.safe_save(datafile(channel)) {|file|
-            quotes.compact.each {|q|
-              file.puts "#{q.num} | #{q.date} | #{q.source} | #{q.quote}"
-            }
-          }
-          @changed[channel] = false
-        else
-          debug "Not writing quotefile for channel #{channel} (unchanged)"
-        end
-      rescue => e
-        error "failed to write quotefile for channel #{channel}!\n#{$!}"
-        error "#{e.class}: #{e}"
-        error e.backtrace.join("\n")
-      end
-    }
+    @registry[:lists] = @lists
+    @registry.flush
   end
 
   def cleanup
     @lists.clear
-    @changed.clear
     super
   end
 
@@ -67,7 +50,6 @@ class QuotePlugin < Plugin
     @lists[channel] = Array.new if(!@lists.has_key?(channel))
     num = @lists[channel].length
     @lists[channel][num] = Quote.new(num, Time.new, source.fullform, quote)
-    @changed[channel] = true
     return num
   end
 
@@ -91,7 +73,6 @@ class QuotePlugin < Plugin
     if(@lists[channel][num])
       @lists[channel][num] = nil
       @lists[channel].pop if num == @lists[channel].length - 1
-      @changed[channel] = true
       return true
     end
     return false
