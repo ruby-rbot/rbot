@@ -37,8 +37,12 @@ class Bot
         if gem
           path = gem.full_gem_path
           debug "installed via rubygems to #{path}"
-          @@datadir = "#{path}/data/rbot"
-          @@coredir = "#{path}/lib/rbot/core"
+          if File.directory? "#{path}/data/rbot"
+            @@datadir = "#{path}/data/rbot"
+          end
+          if File.directory? "#{path}/lib/rbot/core"
+            @@coredir = "#{path}/lib/rbot/core"
+          end
         else
           debug "not installed via rubygems"
         end
