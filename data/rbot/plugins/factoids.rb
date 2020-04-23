@@ -9,78 +9,78 @@
 #
 # Store (and retrieve) unstructured one-sentence factoids
 
+
+class ::Factoid
+  def initialize(hash)
+    @hash = hash.reject { |k, val| val.nil? or val.empty? rescue false }
+    raise ArgumentError, "no fact!" unless @hash[:fact]
+    if String === @hash[:when]
+      @hash[:when] = Time.parse @hash[:when]
+    end
+  end
+
+  def to_s(opts={})
+    show_meta = opts[:meta]
+    fact = @hash[:fact]
+    if !show_meta
+      return fact
+    end
+    meta = ""
+    metadata = []
+    if @hash[:who]
+      metadata << _("from %{who}" % @hash)
+    end
+    if @hash[:when]
+      metadata << _("on %{when}" % @hash)
+    end
+    if @hash[:where]
+      metadata << _("in %{where}" % @hash)
+    end
+    unless metadata.empty?
+      meta << _(" [%{data}]" % {:data => metadata.join(" ")})
+    end
+    return fact+meta
+  end
+
+  def [](*args)
+    @hash[*args]
+  end
+
+  def []=(*args)
+    @hash.send(:[]=,*args)
+  end
+
+  def to_hsh
+    return @hash
+  end
+  alias :to_hash :to_hsh
+end
+
+class ::FactoidList < ArrayOf
+  def initialize(ar=[])
+    super(Factoid, ar)
+  end
+
+  def index(f)
+    fact = f.to_s
+    return if fact.empty?
+    self.map { |fs| fs[:fact] }.index(fact)
+  end
+
+  def delete(f)
+    idx = index(f)
+    return unless idx
+    self.delete_at(idx)
+  end
+
+  def grep(x)
+    self.find_all { |f|
+      x === f[:fact]
+    }
+  end
+end
+
 class FactoidsPlugin < Plugin
-
-  class Factoid
-    def initialize(hash)
-      @hash = hash.reject { |k, val| val.nil? or val.empty? rescue false }
-      raise ArgumentError, "no fact!" unless @hash[:fact]
-      if String === @hash[:when]
-        @hash[:when] = Time.parse @hash[:when]
-      end
-    end
-
-    def to_s(opts={})
-      show_meta = opts[:meta]
-      fact = @hash[:fact]
-      if !show_meta
-        return fact
-      end
-      meta = ""
-      metadata = []
-      if @hash[:who]
-        metadata << _("from %{who}" % @hash)
-      end
-      if @hash[:when]
-        metadata << _("on %{when}" % @hash)
-      end
-      if @hash[:where]
-        metadata << _("in %{where}" % @hash)
-      end
-      unless metadata.empty?
-        meta << _(" [%{data}]" % {:data => metadata.join(" ")})
-      end
-      return fact+meta
-    end
-
-    def [](*args)
-      @hash[*args]
-    end
-
-    def []=(*args)
-      @hash.send(:[]=,*args)
-    end
-
-    def to_hsh
-      return @hash
-    end
-    alias :to_hash :to_hsh
-  end
-
-  class FactoidList < ArrayOf
-    def initialize(ar=[])
-      super(Factoid, ar)
-    end
-
-    def index(f)
-      fact = f.to_s
-      return if fact.empty?
-      self.map { |fs| fs[:fact] }.index(fact)
-    end
-
-    def delete(f)
-      idx = index(f)
-      return unless idx
-      self.delete_at(idx)
-    end
-
-    def grep(x)
-      self.find_all { |f|
-        x === f[:fact]
-      }
-    end
-  end
-
   # TODO default should be language-specific
   Config.register Config::ArrayValue.new('factoids.trigger_pattern',
     :default => [
@@ -119,19 +119,28 @@ class FactoidsPlugin < Plugin
   def initialize
     super
 
-    # TODO config
-    @dir = datafile
-    @filename = "factoids.rbot"
-    @factoids = FactoidList.new
     @triggers = Set.new
     @learn_patterns = []
-    reset_learn_patterns
-    begin
-      read_factfile
-    rescue
-      debug $!
+
+    @factoids = @registry[:factoids]
+    unless @factoids
+      @factoids = FactoidList.new
+
+      @dir = datafile
+      @filename = "factoids.rbot"
+      debug "migrate from existing factoids #{@dir}/#{@filename}"
+      reset_learn_patterns
+      begin
+        read_factfile
+      rescue
+        debug $!
+      end
+      @changed = true
+    else
+      reset_learn_patterns
+      reset_triggers
+      @changed = false
     end
-    @changed = false
   end
 
   def read_factfile(name=@filename,dir=@dir)
@@ -177,15 +186,8 @@ class FactoidsPlugin < Plugin
 
   def save
     return unless @changed
-    Dir.mkdir(@dir) unless FileTest.directory?(@dir)
-    fname = File.join(@dir,@filename)
-    ar = ["when | who | where | fact"]
-    @factoids.each { |f|
-      ar << "%s | %s | %s | %s" % [ f[:when], f[:who], f[:where], f[:fact]]
-    }
-    Utils.safe_save(fname) do |file|
-      file.puts ar
-    end
+    @registry[:factoids] = @factoids
+    @registry.flush
     @changed = false
   end
 
