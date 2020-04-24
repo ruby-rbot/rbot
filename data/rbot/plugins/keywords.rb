@@ -325,8 +325,6 @@ class Keywords < Plugin
     case plugin
     when /keyword/
       case topic
-      when 'export'
-        'keyword export => exports definitions to keyword_factoids.rbot'
       when 'stats'
         'keyword stats => show statistics about static facts'
       when 'wipe'
@@ -474,41 +472,11 @@ class Keywords < Plugin
     m.reply "done"
   end
 
-  # export keywords to factoids file
-  def keyword_factoids_export
-    ar = Array.new
-
-    debug @keywords.keys
-
-    @keywords.each { |k, val|
-      next unless val
-      kw = Keyword.restore(val)
-      ar |= kw.to_factoids(k)
-    }
-
-    # TODO check factoids config
-    # also TODO: runtime export
-    dir = @bot.path 'factoids'
-    fname = File.join(dir,"keyword_factoids.rbot")
-
-    Dir.mkdir(dir) unless FileTest.directory?(dir)
-    Utils.safe_save(fname) do |file|
-      file.puts ar
-    end
-  end
-
   # privmsg handler
   def privmsg(m)
     case m.plugin
     when "keyword"
       case m.params
-      when /^export$/
-        begin
-          keyword_factoids_export
-          m.okay
-        rescue
-          m.reply _("failed to export keywords as factoids (%{err})" % {:err => $!})
-        end
       when /^set\s+(.+?)\s+(is|are)\s+(.+)$/
         keyword_command(m, $1, $2, $3) if @bot.auth.allow?('keycmd', m.source, m.replyto)
       when /^forget\s+(.+)$/
