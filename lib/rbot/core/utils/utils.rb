@@ -140,22 +140,6 @@ module ::Irc
 
   # Miscellaneous useful functions
   module Utils
-    @@bot = nil unless defined? @@bot
-    @@safe_save_dir = nil unless defined?(@@safe_save_dir)
-
-    # The bot instance
-    def Utils.bot
-      @@bot
-    end
-
-    # Set up some Utils routines which depend on the associated bot.
-    def Utils.bot=(b)
-      debug "initializing utils"
-      @@bot = b
-      @@safe_save_dir = @@bot.path('safe_save')
-    end
-
-
     # Seconds per minute
     SEC_PER_MIN = 60
     # Seconds per hour
@@ -318,21 +302,6 @@ module ::Irc
       }
       debug $?
       return $?.success?
-    end
-
-    # Safely (atomically) save to _file_, by passing a tempfile to the block
-    # and then moving the tempfile to its final location when done.
-    #
-    # call-seq: Utils.safe_save(file, &block)
-    #
-    def Utils.safe_save(file)
-      raise 'No safe save directory defined!' if @@safe_save_dir.nil?
-      basename = File.basename(file)
-      temp = Tempfile.new(basename,@@safe_save_dir)
-      temp.binmode
-      yield temp if block_given?
-      temp.close
-      File.rename(temp.path, file)
     end
 
 
@@ -589,16 +558,16 @@ module ::Irc
     # information is retrieved, and special title/summary
     # extraction routines are used if possible.
     #
-    def Utils.get_html_info(doc, opts={})
+    def Utils.get_html_info(bot, doc, opts={})
       case doc
       when String
         Utils.get_string_html_info(doc, opts)
       when Net::HTTPResponse
-        Utils.get_resp_html_info(doc, opts)
+        Utils.get_resp_html_info(bot, doc, opts)
       when URI
         ret = DataStream.new
-        @@bot.httputil.get_response(doc) { |resp|
-          ret.replace Utils.get_resp_html_info(resp, opts)
+        bot.httputil.get_response(doc) { |resp|
+          ret.replace Utils.get_resp_html_info(bot, resp, opts)
         }
         return ret
       else
@@ -615,7 +584,7 @@ module ::Irc
     # Currently, the only accepted options (in _opts_) are
     # uri_fragment:: the URI fragment of the original request
     # full_body::    get the whole body instead of
-    #                @@bot.config['http.info_bytes'] bytes only
+    #                bot.config['http.info_bytes'] bytes only
     #
     # Returns a DataStream with the following keys:
     # text:: the (partial) body
@@ -626,7 +595,7 @@ module ::Irc
     #   a Hash whose keys are lowercase forms of the HTTP
     #   header fields, and whose values are Arrays.
     #
-    def Utils.get_resp_html_info(resp, opts={})
+    def Utils.get_resp_html_info(bot, resp, opts={})
       case resp
       when Net::HTTPSuccess
         loc = URI.parse(resp['x-rbot-location'] || resp['location']) rescue nil
@@ -635,9 +604,9 @@ module ::Irc
         end
         ret = DataStream.new(opts.dup)
         ret[:headers] = resp.to_hash
-        ret[:text] = partial = opts[:full_body] ? resp.body : resp.partial_body(@@bot.config['http.info_bytes'])
+        ret[:text] = partial = opts[:full_body] ? resp.body : resp.partial_body(bot.config['http.info_bytes'])
 
-        filtered = Utils.try_htmlinfo_filters(ret)
+        filtered = Utils.try_htmlinfo_filters(bot, ret)
 
         if filtered
           return filtered
@@ -658,14 +627,14 @@ module ::Irc
     # The input DataStream should have the downloaded HTML as primary key
     # (:text) and possibly a :headers key holding the resonse headers.
     #
-    def Utils.try_htmlinfo_filters(ds)
-      filters = @@bot.filter_names(:htmlinfo)
+    def Utils.try_htmlinfo_filters(bot, ds)
+      filters = bot.filter_names(:htmlinfo)
       return nil if filters.empty?
       cur = nil
       # TODO filter priority
       filters.each { |n|
         debug "testing htmlinfo filter #{n}"
-        cur = @@bot.filter(@@bot.global_filter_name(n, :htmlinfo), ds)
+        cur = bot.filter(bot.global_filter_name(n, :htmlinfo), ds)
         debug "returned #{cur.pretty_inspect}"
         break if cur
       }
@@ -720,7 +689,7 @@ module ::Irc
     # If (optional) _opts_ :message is specified, those paragraphs are
     # echoed as replies to the IRC message passed as _opts_ :message
     #
-    def Utils.get_first_pars(urls, count, opts={})
+    def Utils.get_first_pars(bot, urls, count, opts={})
       idx = 0
       msg = opts[:message]
       retval = Array.new
@@ -729,7 +698,7 @@ module ::Irc
         idx += 1
 
         begin
-          info = Utils.get_html_info(URI.parse(url), opts)
+          info = Utils.get_html_info(bot, URI.parse(url), opts)
 
           par = info[:content]
           retval.push(par)
@@ -762,5 +731,3 @@ module ::Irc
 
   end
 end
-
-Irc::Utils.bot = Irc::Bot::Plugins.manager.bot

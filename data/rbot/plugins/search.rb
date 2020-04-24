@@ -168,7 +168,7 @@ class SearchPlugin < Plugin
 
     # If we return a single, full result, change the output to a more compact representation
     if single
-      fp = first_pars > 0 ? " --  #{Utils.get_first_pars(links, first_pars)}" : ""
+      fp = first_pars > 0 ? " --  #{Utils.get_first_pars(@bot, links, first_pars)}" : ""
       m.reply("Result for %{what}: %{string}%{fp}" % {
         :what => what, :string => result_string, :fp => fp
       }, :overlong => :truncate)
@@ -179,7 +179,7 @@ class SearchPlugin < Plugin
 
     return unless first_pars > 0
 
-    Utils.get_first_pars urls, first_pars, :message => m
+    Utils.get_first_pars(@bot, urls, first_pars, :message => m)
   end
 
   def google(m, params)
@@ -232,7 +232,7 @@ class SearchPlugin < Plugin
 
     if params[:lucky]
       m.reply result_string.first
-      Utils.get_first_pars([results.map {|url, title| url}.first], first_pars, :message => m)
+      Utils.get_first_pars(@bot, [results.map {|url, title| url}.first], first_pars, :message => m)
       return
     end
 
@@ -240,7 +240,7 @@ class SearchPlugin < Plugin
 
     return unless first_pars > 0
 
-    Utils.get_first_pars(results.map {|url, title| url}, first_pars, :message => m)
+    Utils.get_first_pars(@bot, results.map {|url, title| url}, first_pars, :message => m)
   end
 
   def google_define(m, what, params)

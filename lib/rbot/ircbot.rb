@@ -373,13 +373,6 @@ class Bot
 
     repopulate_botclass_directory
 
-    save_dir = File.join(@botclass, 'safe_save')
-    Dir.mkdir(save_dir) unless File.exist?(save_dir)
-    unless FileTest.directory? save_dir
-      error "safe save location #{save_dir} is not a directory"
-      exit 2
-    end
-
     # Time at which the last PING was sent
     @last_ping = nil
     # Time at which the last line was RECV'd from the server
