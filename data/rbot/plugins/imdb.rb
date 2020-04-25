@@ -150,7 +150,7 @@ class Imdb
       debug title_date
       # note that the date dash for series is a - (ndash), not a - (minus sign)
       # also, the second date, if missing, is an no-break space
-      pre_title, extra, date, junk = title_date.scan(/^(.*)\((.+?\s+)?(\d\d\d\d(?:–(?:\d\d\d\d| )?)?(?:\/[IV]+)?)\)\s*(.+)?$/).first
+      pre_title, extra, date, junk = title_date.scan(/^(.*)\((.+?\s+)?(\d\d\d\d(?:–(?:\d\d\d\d| )?)?(?:\/[IV]+)?)[^\)]*\)\s*(.+)?$/).first
       extra.strip! if extra
       pre_title.strip!
       title = fix_article(pre_title)
