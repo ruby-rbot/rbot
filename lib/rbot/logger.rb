@@ -23,13 +23,16 @@ class Bot
       @file_logger = nil
 
       @queue = Queue.new
-      @thread = start_thread
+      start_thread
     end
 
     def set_logfile(filename, keep, max_size)
       @file_logger = Logger.new(filename, keep, max_size*1024*1024)
       @file_logger.datetime_format = @dateformat
       @file_logger.level = @logger.level
+      # make sure the thread is running, which might be false after a fork
+      # (conveniently, we call set_logfile right after the fork)
+      start_thread
     end
 
     def set_level(level)
@@ -90,10 +93,17 @@ class Bot
       end
     end
 
+    def flush
+      while @queue.size > 0
+        next
+      end
+    end
+
     private
 
     def start_thread
-      Thread.new do
+      return if @thread and @thread.alive?
+      @thread = Thread.new do
         lines = nil
         while lines = @queue.pop
           lines.each { |line|

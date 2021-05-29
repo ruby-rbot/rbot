@@ -403,6 +403,8 @@ class Bot
       debug "Using `#{@logfile}' as debug log"
     end
 
+    LoggerManager.instance.flush
+
     # See http://blog.humlab.umu.se/samuel/archives/000107.html
     # for the backgrounding code
     if $daemonize
@@ -421,8 +423,11 @@ class Bot
       # File.umask 0000                # Ensure sensible umask. Adjust as needed.
     end
 
-    # setup logger based on bot configuration
-    LoggerManager.instance.set_level(@config['log.level'])
+    # setup logger based on bot configuration, if not set from the command line
+    loglevel_set = $opts.has_key?('debug') or $opts.has_key?('loglevel')
+    LoggerManager.instance.set_level(@config['log.level']) unless loglevel_set
+
+    # Set the logfile
     LoggerManager.instance.set_logfile(@logfile, @config['log.keep'], @config['log.max_size'])
 
     if $daemonize

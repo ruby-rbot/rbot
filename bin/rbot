@@ -111,14 +111,14 @@ if ($opts["help"])
   exit 0
 end
 
-if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
-  # setup logger based on command line arguments
-  loglevel = $opts['loglevel'] ? $opts['loglevel'].to_i : nil
-  loglevel = $opts['debug'] ? 0 : loglevel
-  if loglevel
-    Irc::Bot::LoggerManager.instance.set_level(loglevel)
-  end
+# setup logger based on command line arguments
+loglevel = $opts['loglevel'] ? $opts['loglevel'].to_i : nil
+loglevel = $opts['debug'] ? 0 : loglevel
+if loglevel
+  Irc::Bot::LoggerManager.instance.set_level(loglevel)
+end
 
+if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
   # just run the bot
   bot.mainloop
 end
