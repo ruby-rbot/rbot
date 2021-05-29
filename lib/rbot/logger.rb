@@ -29,6 +29,7 @@ class Bot
     def set_logfile(filename, keep, max_size)
       @file_logger = Logger.new(filename, keep, max_size*1024*1024)
       @file_logger.datetime_format = @dateformat
+      @file_logger.level = @logger.level
     end
 
     def set_level(level)

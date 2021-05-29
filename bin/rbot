@@ -114,7 +114,7 @@ end
 if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
   # setup logger based on command line arguments
   loglevel = $opts['loglevel'] ? $opts['loglevel'].to_i : nil
-  loglevel = $opts['debug'] ? 0 : nil
+  loglevel = $opts['debug'] ? 0 : loglevel
   if loglevel
     Irc::Bot::LoggerManager.instance.set_level(loglevel)
   end
