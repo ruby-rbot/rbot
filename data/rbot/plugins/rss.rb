@@ -328,7 +328,7 @@ class RSSFeedsPlugin < Plugin
   Config.register Config::EnumValue.new('rss.announce_method',
     :values => ['say', 'notice'],
     :default => 'say',
-    :desc => "Whether to display links from the text of a feed item.")
+    :desc => "Whether to send a message or notice when announcing new feeds.")
 
   # Make an  'unique' ID for a given item, based on appropriate bot options
   # Currently only supported is bot.config['rss.show_updated']: when false,
