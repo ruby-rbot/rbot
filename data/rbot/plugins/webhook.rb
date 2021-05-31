@@ -10,6 +10,9 @@
 # The reason for this two-tier filtering is to allow the same output filters
 # to be fed data from different (potentially unknown) hosting services.
 
+# TODO for the repo matchers in the built-in filters we might want to support
+# both the whole user/repo or just the repo name
+
 require 'json'
 
 class WebHookPlugin < Plugin
@@ -114,7 +117,7 @@ class WebHookPlugin < Plugin
   # ref::
   #   the ref referenced by the event
   # number::
-  #   the number of the issue or PR modified, or the number of commits
+  #   the cooked number of the issue or PR modified, or the number of commits; this includes the name of the object or the word 'commits'
   # title::
   #   title of the object
   # link::
@@ -146,6 +149,11 @@ class WebHookPlugin < Plugin
     # gitea is essentially compatible with github
     webhook_host_filter :gitea do |s|
       github_host_filter(s)
+    end
+
+    # gitlab has a different one
+    webhook_host_filter :gitlab do |s|
+      gitlab_host_filter(s)
     end
 
     @user_types ||= datafile 'filters.rb'
@@ -213,6 +221,72 @@ class WebHookPlugin < Plugin
     return input_stream.merge stream_hash
   end
 
+  GITLAB_EVENT_ACTION = {
+    'push' => 'pushed',
+    'tag_push' => 'pushed tag',
+    'note' => 'commented on'
+  }
+
+  def gitlab_host_filter(input_stream)
+    request = input_stream[:request]
+    json = input_stream[:payload]
+    req_repo = input_stream[:repo]
+
+    return nil unless request['x-gitlab-event']
+
+    repo = json[:project]
+    return nil unless repo
+    repo = repo[:path_with_namespace]
+    return nil unless repo
+
+    return nil unless repo == req_repo
+
+    event = json[:object_kind]
+    if not event
+      debug "No object_kind found in JSON"
+      return nil
+    end
+
+    event_key = :object_attributes
+    obj = json[event_key]
+
+    user = json[:user] # may be nil: some events use keys such as user_username
+    # TODO we might want to unify this at the rbot level
+
+    # comments have a noteable_type, but this is not the key of the object used
+    # so instead we just look for the known keys
+    notable = nil
+    [:commit, :merge_request, :issue, :snippet].each do |k|
+      if json.has_key?(k)
+        notable = json[k]
+        break
+      end
+    end
+
+    link = obj ? obj[:url] : nil
+    title = notable ? notable[:title] : obj ? obj[:title] : nil
+    title ||= json[:commits].last[:title] rescue nil
+
+    # TODO https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+
+    stream_hash = { :event => event,
+                    :event_key => event_key,
+                    :ref => json[:ref],
+                    :author => user ? user[:username] : json[:user_username],
+                    :action => GITLAB_EVENT_ACTION[event] || (obj ? (obj[:action] || 'created') :  event),
+                    :title => title,
+                    :link => link,
+                    :text => obj ? (obj[:note] || obj[:description]) : nil
+    }
+
+    num = notable ? (notable[:iid] || notable[:id]) : obj ? obj[:iid] || obj[:id] : nil
+    stream_hash[:number] = '%{object} #%{num}' % { :num => num, :object => (obj[:noteable_type] || event).to_s.gsub('_', ' ') } if num
+    num = json[:total_commits_count]
+    stream_hash[:number] = _("%{num} commits") % { :num => num } if num
+
+    debug stream_hash
+    return input_stream.merge stream_hash
+  end
 
   def initialize
     super
