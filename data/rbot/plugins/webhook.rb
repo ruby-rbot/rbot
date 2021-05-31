@@ -13,6 +13,15 @@
 # TODO for the repo matchers in the built-in filters we might want to support
 # both the whole user/repo or just the repo name
 
+# TODO specialized output filter by event/event_key, with some kind of automatic selection
+# e.g. if :default_pull_request exists, then it's automatically used if :event => "pull_request"
+# and :default is the current output filter.
+# The big question is what we should fallback to if the specific filter doesn't exist..
+#
+# If :custom exists, :default_pull_request exists and :custom_pull_request does not,
+# should we fall back to :custom or to :default_pull_request?
+
+
 require 'json'
 
 class WebHookPlugin < Plugin
@@ -211,6 +220,8 @@ class WebHookPlugin < Plugin
                     :link => link
     }
 
+    stream_hash[:ref] ||= json[:base][:ref] if json[:base]
+
     num = json[:number] || obj[:number] rescue nil
     stream_hash[:number] = '%{object} #%{num}' % { :num => num, :object => event_key.to_s.gsub('_', ' ') } if num
     num = json[:size] || json[:commits].size rescue nil
@@ -278,6 +289,8 @@ class WebHookPlugin < Plugin
                     :link => link,
                     :text => obj ? (obj[:note] || obj[:description]) : nil
     }
+
+    stream_hash[:ref] ||= obj[:target_branch] if obj
 
     num = notable ? (notable[:iid] || notable[:id]) : obj ? obj[:iid] || obj[:id] : nil
     stream_hash[:number] = '%{object} #%{num}' % { :num => num, :object => (obj[:noteable_type] || event).to_s.gsub('_', ' ') } if num
