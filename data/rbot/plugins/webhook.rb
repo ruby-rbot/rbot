@@ -335,7 +335,7 @@ class WebHookPlugin < Plugin
     repo = params[:repo]
     chan = (params[:chan] || m.replyto).downcase
 
-    if @repo.has_key?(repo)
+    if @repos.has_key?(repo)
       @repos[repo].delete(chan)
       m.okay
       if @repos[repo].empty?
