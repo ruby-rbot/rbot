@@ -100,6 +100,7 @@ class Bot
         @queue << nil
         @thread.join
         @thread = nil
+        log_session_end
       end
     end
 
