@@ -431,7 +431,10 @@ class Bot
     LoggerManager.instance.set_logfile(@logfile, @config['log.keep'], @config['log.max_size'])
 
     if $daemonize
-      log "Redirecting standard input/output/error"
+      log "Redirecting standard input/output/error, console logger disabled"
+      LoggerManager.instance.flush
+      LoggerManager.instance.disable_console_logger
+
       [$stdin, $stdout, $stderr].each do |fd|
         begin
           fd.reopen "/dev/null"

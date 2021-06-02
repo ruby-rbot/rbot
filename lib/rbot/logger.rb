@@ -14,12 +14,22 @@ class Bot
   class LoggerManager
     include Singleton
 
+    def enable_console_logger
+      @console_logger = Logger.new(STDERR)
+      @console_logger.datetime_format = @dateformat
+      @console_logger.level = Logger::Severity::DEBUG
+    end
+
+    def disable_console_logger
+      @console_logger.close if @console_logger
+      @console_logger = nil
+    end
+
     def initialize
       @dateformat = "%Y/%m/%d %H:%M:%S"
 
-      @logger = Logger.new(STDERR)
-      @logger.datetime_format = @dateformat
-      @logger.level = Logger::Severity::DEBUG
+      enable_console_logger
+
       @file_logger = nil
 
       @queue = Queue.new
@@ -27,26 +37,26 @@ class Bot
     end
 
     def set_logfile(filename, keep, max_size)
+      # close previous file logger if present
+      @file_logger.close if @file_logger
+
       @file_logger = Logger.new(filename, keep, max_size*1024*1024)
       @file_logger.datetime_format = @dateformat
-      @file_logger.level = @logger.level
+      @file_logger.level = @console_logger.level
+
       # make sure the thread is running, which might be false after a fork
       # (conveniently, we call set_logfile right after the fork)
       start_thread
     end
 
     def set_level(level)
-      @logger.level = level
-      if @file_logger
-        @file_logger.level = level
-      end
+      @console_logger.level = level if @console_logger
+      @file_logger.level = level if @file_logger
     end
 
     def sync_log(severity, message = nil, progname = nil)
-      @logger.add(severity, message, progname)
-      if @file_logger
-        @file_logger.add(severity, message, progname)
-      end
+      @console_logger.add(severity, message, progname) if @console_logger
+      @file_logger.add(severity, message, progname) if @file_logger
     end
 
     def async_log(severity, message=nil, who_pos=1)
