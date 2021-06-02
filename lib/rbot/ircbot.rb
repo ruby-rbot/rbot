@@ -456,6 +456,8 @@ class Bot
         end
         return str.to_s.size
       end
+
+      LoggerManager.instance.log_session_start
     end
 
     File.open($opts['pidfile'] || File.join(@botclass, 'rbot.pid'), 'w') do |pf|
@@ -927,7 +929,8 @@ class Bot
 
   # begin event handling loop
   def mainloop
-    while true
+    @keep_looping = true
+    while @keep_looping
       too_fast = 0
       quit_msg = nil
       valid_recv = false # did we receive anything (valid) from the server yet?
@@ -957,7 +960,8 @@ class Bot
       # exceptions that ARENT SocketError's. How am I supposed to handle
       # that?
       rescue SystemExit
-        exit 0
+        @keep_looping = false
+        break
       rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, TimeoutError, SocketError => e
         error "network exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
@@ -1254,7 +1258,7 @@ class Bot
     begin
       shutdown(message)
     ensure
-      exit 0
+      @keep_looping = false
     end
   end
 
@@ -1264,6 +1268,10 @@ class Bot
       :wait => @config['server.reconnect_wait']
     } if (!message || message.empty?)
     shutdown(message)
+
+    Irc::Bot::LoggerManager.instance.flush
+    Irc::Bot::LoggerManager.instance.log_session_end
+
     sleep @config['server.reconnect_wait']
     begin
       # now we re-exec

@@ -123,3 +123,5 @@ if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
   bot.mainloop
 end
 
+Irc::Bot::LoggerManager.instance.flush
+Irc::Bot::LoggerManager.instance.halt_logger
