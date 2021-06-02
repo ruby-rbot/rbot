@@ -444,17 +444,19 @@ class Bot
         end
       end
 
-      def $stdout.write(str=nil)
+      def $stdout.write(*args)
+        str = args.map { |s| s.to_s }.join("")
         log str, 2
-        return str.to_s.size
+        return str.bytesize
       end
-      def $stderr.write(str=nil)
+      def $stderr.write(*args)
+        str = args.map { |s| s.to_s }.join("")
         if str.to_s.match(/:\d+: warning:/)
           warning str, 2
         else
           error str, 2
         end
-        return str.to_s.size
+        return str.bytesize
       end
 
       LoggerManager.instance.log_session_start
