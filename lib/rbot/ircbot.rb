@@ -445,7 +445,7 @@ class Bot
         log str, 2
         return str.to_s.size
       end
-      def $stdout.write(str=nil)
+      def $stderr.write(str=nil)
         if str.to_s.match(/:\d+: warning:/)
           warning str, 2
         else
