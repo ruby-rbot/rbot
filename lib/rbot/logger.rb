@@ -21,7 +21,6 @@ class Bot
     end
 
     def disable_console_logger
-      @console_logger.close if @console_logger
       @console_logger = nil
     end
 
@@ -84,6 +83,8 @@ class Bot
     end
 
     def log_session_start
+      # if we forked, the thread may be dead, so let's restart it if necessary
+      start_thread
       if @file_logger
         @file_logger << "\n\n=== session started on #{Time.now.strftime(@dateformat)} ===\n\n"
       end
