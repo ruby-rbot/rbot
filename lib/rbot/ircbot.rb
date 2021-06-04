@@ -403,26 +403,6 @@ class Bot
       debug "Using `#{@logfile}' as debug log"
     end
 
-    LoggerManager.instance.flush
-
-    # See http://blog.humlab.umu.se/samuel/archives/000107.html
-    # for the backgrounding code
-    if $daemonize
-      begin
-        exit if fork
-        Process.setsid
-        exit if fork
-      rescue NotImplementedError
-        warning "Could not background, fork not supported"
-      rescue SystemExit
-        exit 0
-      rescue Exception => e
-        warning "Could not background. #{e.pretty_inspect}"
-      end
-      Dir.chdir botclass
-      # File.umask 0000                # Ensure sensible umask. Adjust as needed.
-    end
-
     # setup logger based on bot configuration, if not set from the command line
     loglevel_set = $opts.has_key?('debug') or $opts.has_key?('loglevel')
     LoggerManager.instance.set_level(@config['log.level']) unless loglevel_set
@@ -459,8 +439,24 @@ class Bot
         return str.bytesize
       end
 
-      LoggerManager.instance.log_session_start
+      # See http://blog.humlab.umu.se/samuel/archives/000107.html
+      # for the backgrounding code
+      begin
+        exit if fork
+        Process.setsid
+        exit if fork
+      rescue NotImplementedError
+        warning "Could not background, fork not supported"
+      rescue SystemExit
+        exit 0
+      rescue Exception => e
+        warning "Could not background. #{e.pretty_inspect}"
+      end
+      Dir.chdir botclass
+      # File.umask 0000                # Ensure sensible umask. Adjust as needed.
     end
+
+    LoggerManager.instance.log_session_start
 
     File.open($opts['pidfile'] || File.join(@botclass, 'rbot.pid'), 'w') do |pf|
       pf << "#{$$}\n"
