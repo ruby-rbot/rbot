@@ -227,6 +227,13 @@ class WebHookPlugin < Plugin
     num = json[:size] || json[:commits].size rescue nil
     stream_hash[:number] = _("%{num} commits") % { :num => num } if num
 
+    case event
+    when :watch
+      stream_hash[:number] ||= 'watching 👀%{watchers_count}' % json[:repository]
+    when :star
+      stream_hash[:number] ||= 'star ☆ %{watchers_count}' % json[:repository]
+    end
+
     debug stream_hash
 
     return input_stream.merge stream_hash
