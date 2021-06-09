@@ -531,6 +531,11 @@ class WebServiceModule < CoreBotModule
     end
 
     command = m.post['command']
+    if command.empty?
+      m.send_plaintext('wrong syntax', 400)
+      return
+    end
+
     if not m.source
       botuser = Auth::defaultbotuser
     else
@@ -544,6 +549,8 @@ class WebServiceModule < CoreBotModule
     message = Irc::PrivMessage.new(@bot, nil, user, @bot.myself, command)
 
     res = @bot.plugins.irc_delegate('privmsg', message)
+    # TODO if delegation failed due to wrong auth, it should be reported
+    # as an error, not 200 OK
 
     if m.req['Accept'] == 'application/json'
       { :reply => user.response }
