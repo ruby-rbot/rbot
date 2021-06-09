@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
 	  'INSTALL',
 	  'Usage_en.txt',
 	  'man/rbot.xml',
+	  'man/rbot-remote.xml',
 	  'setup.rb',
 	  'launch_here.rb',
 	  'po/*.pot',
@@ -34,7 +35,7 @@ Gem::Specification.new do |s|
   ]
 
   s.bindir = 'bin'
-  s.executables = ['rbot', 'rbotdb']
+  s.executables = ['rbot', 'rbotdb', 'rbot-remote']
   s.extensions = 'Rakefile'
 
   s.rdoc_options = ['--exclude', 'post-install.rb',

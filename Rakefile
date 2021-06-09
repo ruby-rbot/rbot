@@ -7,7 +7,7 @@ rule '.1' => ['.xml'] do |t|
   sh "xsltproc -nonet -o #{t.name} /usr/share/sgml/docbook/stylesheet/xsl/nwalsh/manpages/docbook.xsl #{t.source}"
 end
 
-task :manpages => ['man/rbot.1']
+task :manpages => ['man/rbot.1', 'man/rbot-remote.1']
 
 SPECFILE = 'rbot.gemspec'
 # The Rakefile is also used after installing the gem, to build
