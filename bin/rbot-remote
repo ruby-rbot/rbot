@@ -17,12 +17,14 @@ require 'optparse'
 user = nil
 pw = nil
 dst = nil
+function = 'say'
 uri = 'http://localhost:7268/dispatch'
 
 opts = OptionParser.new
 opts.on('-u', '--user <user>', "remote user (mandatory)") { |v| user = v }
 opts.on('-p', '--password <pw>', "remote user password (mandatory)") { |v| pw = v }
-opts.on('-d', '--destination <user or #channel>') { |v| dst = v }
+opts.on('-d', '--destination <user/#channel>', "destination of the action (mandatory)") { |v| dst = v }
+opts.on('-f', '--function <func>', "function to trigger (e.g. say, notify), default: #{function}") { |v| function = v }
 opts.on('-r', '--uri <drb uri>', "rbot url (#{uri})") { |v| uri = v }
 opts.on('-h', '--help', "this message") { |v| pw = nil } # sorry!
 opts.on('-a', '--about', "what it's all about.") { |v|
@@ -68,7 +70,7 @@ uri.password = pw
 loop {
     s = gets or break
     s.chomp!
-    resp = Net::HTTP.post_form(uri, 'command' => ['say', dst, s].join(' '))
+    resp = Net::HTTP.post_form(uri, 'command' => [function, dst, s].join(' '))
     puts [resp.code, resp.message, resp.body].join("\t")
 }
 
