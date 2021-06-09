@@ -1,0 +1,74 @@
+#! /usr/bin/ruby
+
+require 'uri'
+require 'net/http'
+require 'optparse'
+
+#++
+#
+# :title: webserver dispatch example script
+#
+# Author:: jsn (dmitry kim) <dmitry dot kim at gmail dot org>
+# Copyright:: (C) 2007 dmitry kim
+# License:: in public domain
+# Modified by:: Giuseppe "Oblomov" Bilotta <giuseppe dot bilotta at gmail dot com>
+# Copyright:: (C) 2020 Giuseppe Bilotta
+
+user = nil
+pw = nil
+dst = nil
+uri = 'http://localhost:7268/dispatch'
+
+opts = OptionParser.new
+opts.on('-u', '--user <user>', "remote user (mandatory)") { |v| user = v }
+opts.on('-p', '--password <pw>', "remote user password (mandatory)") { |v| pw = v }
+opts.on('-d', '--destination <user or #channel>') { |v| dst = v }
+opts.on('-r', '--uri <drb uri>', "rbot url (#{uri})") { |v| uri = v }
+opts.on('-h', '--help', "this message") { |v| pw = nil } # sorry!
+opts.on('-a', '--about', "what it's all about.") { |v|
+    puts <<EOF
+This is just a proof-of-concept example for the rbot webserver dispatch feature.
+This program reads lines of text from the standard input and sends them to a specified irc
+channel or user via rbot. Make sure you enable the webservice dispatch feature
+before use.
+
+The necessary setup is:
+    1) # create a new rbot user ("rmuser", in this example) with a password
+       # ("rmpw", in this example). in an open query to rbot:
+
+       <you> user create rmuser rmpw
+       <rbot> created botuser remote
+
+    2) # add a permission to say for your newly created remote user:
+
+       <you> allow rmuser to do say #channel message
+       <rbot> okies!
+
+    3) # run the #{$0} and type something. the message should
+       # show up on your channel / arrive as an irc private message.
+       
+       [you@yourhost ~]$ ./bin/rbot-remote -u rmuser -p rmpw -d '#your-channel'
+       hello, world!
+       <Ctrl-D>
+       [you@yourhost ~]$
+EOF
+    exit 0
+}
+opts.parse!
+
+if !pw || !user || !dst
+    puts opts.to_s
+    exit 0
+end
+
+uri = URI(uri)
+uri.user = user
+uri.password = pw
+
+loop {
+    s = gets or break
+    s.chomp!
+    resp = Net::HTTP.post_form(uri, 'command' => ['say', dst, s].join(' '))
+    puts [resp.code, resp.message, resp.body].join("\t")
+}
+
