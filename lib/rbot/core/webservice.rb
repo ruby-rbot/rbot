@@ -534,7 +534,7 @@ class WebServiceModule < CoreBotModule
     if not m.source
       botuser = Auth::defaultbotuser
     else
-      botuser = m.source.botuser
+      botuser = m.source
     end
     netmask = '%s!%s@%s' % [botuser.username, botuser.username, m.client]
 
