@@ -254,8 +254,7 @@ class UrlPlugin < Plugin
   def message(m)
     return if m.address?
 
-    escaped = URI.escape(m.message, OUR_UNSAFE)
-    urls = URI.extract(escaped, ['http', 'https'])
+    urls = URI.extract(m.message, ['http', 'https'])
     return if urls.empty?
     Thread.new { handle_urls(m, :urls => urls) }
   end
