@@ -16,7 +16,7 @@ begin
 
   if File.exists? '.git'
     begin
-      git_out = `git log -1 --pretty=raw | git name-rev --stdin`.split("\n")
+      git_out = `git log -1 --pretty=raw | git name-rev --annotate-stdin`.split("\n")
       commit, branch_spec = git_out.first.scan(/^commit (\S+)(?: \((\S+)\))?$/).first
       $version_timestamp = git_out[4].split[-2].to_i
       subject = git_out[6].strip rescue ""
