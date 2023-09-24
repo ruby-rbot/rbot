@@ -3,6 +3,8 @@
 #
 # :title: Url plugin
 
+require 'socket'
+
 define_structure :Url, :channel, :nick, :time, :url, :info
 
 class UrlPlugin < Plugin
@@ -78,8 +80,7 @@ class UrlPlugin < Plugin
 
     # also check the ip, the canonical name and the aliases
     begin
-      checks = TCPSocket.gethostbyname(url.host)
-      checks.delete_at(-2)
+      checks = Addrinfo.getaddrinfo(url.host, nil).map { |addr| addr.ip_address }
     rescue => e
       return "Unable to retrieve info for #{url.host}: #{e.message}"
     end
