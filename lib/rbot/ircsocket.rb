@@ -286,6 +286,7 @@ module Irc
       @lines_received = 0
       @ssl = opts[:ssl]
       @ssl_verify = opts[:ssl_verify]
+      @ssl_cert = opts[:ssl_cert]
       @ssl_ca_file = opts[:ssl_ca_file]
       @ssl_ca_path = opts[:ssl_ca_path]
       @penalty_pct = opts[:penalty_pct] || 100
@@ -340,6 +341,11 @@ module Irc
           ssl_context.verify_mode = OpenSSL::SSL::VERIFY_PEER 
         else
           ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        end
+        if @ssl_cert and not @ssl_cert.empty?
+          client_cert = OpenSSL::X509::Certificate.new(File.read(@ssl_cert))
+          client_key = OpenSSL::PKey.read(File.read(@ssl_cert))
+          ssl_context.add_certificate(client_cert, client_key)
         end
         sock = OpenSSL::SSL::SSLSocket.new(sock, ssl_context)
         sock.sync_close = true
