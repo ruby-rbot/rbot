@@ -89,7 +89,7 @@ module Journal
 
   module Storage
     class AbstractStorage
-      # intializes/opens a new storage connection
+      # initializes/opens a new storage connection
       def initialize(opts={})
       end
 
@@ -132,7 +132,7 @@ module Journal
   end
 
   # Describes a query on journal entries, it is used both to describe
-  # a subscription aswell as to query persisted messages.
+  # a subscription as well as to query persisted messages.
   # There two ways to declare a Query instance, using
   # the DSL like this:
   #

@@ -225,7 +225,7 @@ class ExcusePlugin < Plugin
 "The lines are all busy (busied out, that is -- why let them in to begin with?).",
 "Jan  9 16:41:27 huber su: 'su root' succeeded for .... on /dev/pts/1",
 "It's those computer people in X {city of world}.  They keep stuffing things up.",
-"A star wars satellite accidently blew up the WAN.",
+"A star wars satellite accidentally blew up the WAN.",
 "Fatal error right in front of screen",
 "That function is not currently supported, but Bill Gates assures us it will be featured in the next upgrade.",
 "wrong polarity of neutron flow",

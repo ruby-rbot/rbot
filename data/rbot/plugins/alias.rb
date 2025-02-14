@@ -9,7 +9,7 @@
 #
 # This plugin allows defining aliases for rbot commands. Aliases are like normal rbot
 # commands and can take parameters. When called, they will be substituted into an
-# exisitng rbot command and that is run.
+# existing rbot command and that is run.
 #
 # == Example Session
 #   < alias googlerbot *terms => google site:ruby-rbot.org <terms>
@@ -157,7 +157,7 @@ class AliasPlugin < Plugin
         end.join ' | '
       end
     when 'create'
-      _('"alias <text> => <command>" => add text as an alias of command. Text can contain placeholders marked with : or * for :words and *multiword arguments. The command can contain placeholders enclosed with < > which will be substituded with argument values. For example: alias googlerbot *terms => google site:ruby-rbot.org <terms>')
+      _('"alias <text> => <command>" => add text as an alias of command. Text can contain placeholders marked with : or * for :words and *multiword arguments. The command can contain placeholders enclosed with < > which will be substituted with argument values. For example: alias googlerbot *terms => google site:ruby-rbot.org <terms>')
     when 'commands'
       _('alias list => list defined aliases | alias whatis <alias> => show definition of the alias | alias remove <alias> => remove defined alias | see the "create" topic about adding aliases')
     end

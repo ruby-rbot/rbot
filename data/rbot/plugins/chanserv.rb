@@ -110,7 +110,7 @@ class ChanServPlugin < Plugin
     }
   end
 
-  # This method gets delegated by the NickServ plugin after successfull identification
+  # This method gets delegated by the NickServ plugin after successful identification
   def identified
     return unless @registry[:auto_status]
     @registry[:auto_status].each { |status, ch, who|

@@ -439,7 +439,7 @@ class ImdbPlugin < Plugin
     loc = Utils.check_location(s, TITLE_URL)
     if loc
       sr = loc.first.match(TITLE_URL)[1]
-      extra = $2 # nothign for the time being, could be fullcredits or whatever
+      extra = $2 # nothing for the time being, could be fullcredits or whatever
       res = i.info_title(sr, :nourl => true, :characters => (extra == 'fullcredits'))
       debug res
       if res

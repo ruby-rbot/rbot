@@ -190,7 +190,7 @@ class Bot
       :wizard => true)
     Config.register Config::StringValue.new('server.ssl_ca_path',
       :default => default_ssl_ca_path, :requires_restart => true,
-      :desc => "Alternativly a directory that includes CA PEM files used to verify the SSL connection.",
+      :desc => "Alternatively a directory that includes CA PEM files used to verify the SSL connection.",
       :wizard => true)
     Config.register Config::StringValue.new('server.password',
       :default => false, :requires_restart => true,
@@ -788,10 +788,10 @@ class Bot
         :join_with => ' ',          # by default, use a single space
         :max_lines => 0,          # maximum number of lines to send with a single command
         :overlong => :split,        # or :truncate
-        # TODO an array of splitpoints would be preferrable for this option:
+        # TODO an array of splitpoints would be preferable for this option:
         :split_at => /\s+/,         # by default, split overlong lines at whitespace
         :purge_split => true,       # should the split string be removed?
-        :truncate_text => "#{Reverse}...#{Reverse}"  # text to be appened when truncating
+        :truncate_text => "#{Reverse}...#{Reverse}"  # text to be appended when truncating
       }
     end
     @default_send_options.update opts unless opts.empty?
@@ -955,7 +955,7 @@ class Bot
         end
 
       # I despair of this. Some of my users get "connection reset by peer"
-      # exceptions that ARENT SocketError's. How am I supposed to handle
+      # exceptions that AREN'T SocketError's. How am I supposed to handle
       # that?
       rescue SystemExit
         @keep_looping = false
@@ -974,7 +974,7 @@ class Bot
           too_fast*= 2
           log "Empty message from server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
-        quit_msg = "Unparseable Server Message: #{e.message.inspect}"
+        quit_msg = "Unparsable Server Message: #{e.message.inspect}"
         retry
       rescue ServerError => e
         quit_msg = "server ERROR: " + e.message
@@ -1144,7 +1144,7 @@ class Bot
     }
   end
 
-  # queue an arbitraty message for the server
+  # queue an arbitrary message for the server
   def sendq(message="", chan=nil, ring=0)
     # temporary
     @socket.queue(message, chan, ring)

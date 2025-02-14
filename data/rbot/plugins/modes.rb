@@ -1,7 +1,7 @@
 class ModesPlugin < Plugin
 
   def help(plugin, topic="")
-    return "'op [<user>] [<channel>]' => grant user> (if ommitted yourself) ops in <channel> (or in the current channel if no channel is specified). Use deop instead of op to remove the privilege."
+    return "'op [<user>] [<channel>]' => grant user> (if omitted yourself) ops in <channel> (or in the current channel if no channel is specified). Use deop instead of op to remove the privilege."
   end
 
   def op(m, params)

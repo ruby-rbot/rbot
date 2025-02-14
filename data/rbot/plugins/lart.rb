@@ -32,7 +32,7 @@ class LartPlugin < Plugin
     @praises = nil
 
     super
-    # after intialization #set_language is called with the language set in the bot configuration
+    # after initialization #set_language is called with the language set in the bot configuration
     # this loads the larts/praises from the registry
   end
 

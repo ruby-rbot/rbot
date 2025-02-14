@@ -62,7 +62,7 @@ class PGWrapper
 end
 
 # as a replacement for CREATE INDEX IF NOT EXIST that is not in postgres.
-# define function to be able to create an index in case it doesnt exist:
+# define function to be able to create an index in case it doesn't exist:
 # source: http://stackoverflow.com/a/26012880
 CREATE_INDEX = <<-EOT
 CREATE OR REPLACE FUNCTION create_index(table_name text, index_name text, column_name text) RETURNS void AS $$ 

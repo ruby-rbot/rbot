@@ -8,7 +8,7 @@
 class GetTextVersionError < Exception
 end
 
-# try to load gettext, or provide fake getttext functions
+# try to load gettext, or provide fake gettext functions
 begin
 # workaround for gettext not checking empty LANGUAGE
 if ENV["LANGUAGE"] and ENV["LANGUAGE"].empty?
@@ -94,7 +94,7 @@ end
     if not respond_to? :current_textdomain_info
       # Show the current textdomain information. This function is for debugging.
       # * options: options as a Hash.
-      #   * :with_messages - show informations with messages of the current mo file. Default is false.
+      #   * :with_messages - show information with messages of the current mo file. Default is false.
       #   * :out - An output target. Default is STDOUT.
       #   * :with_paths - show the load paths for mo-files.
       def current_textdomain_info(options = {})
@@ -204,7 +204,7 @@ rescue LoadError, GetTextVersionError
     #
     #  (e.g.) "%s, %s" % ["Masao", "Mutoh"]
     #
-    # Also you can use a Hash as the "named argument". This is recommanded way for Ruby-GetText
+    # Also you can use a Hash as the "named argument". This is recommended way for Ruby-GetText
     # because the translators can understand the meanings of the msgids easily.
     # * hash: {:key1 => value1, :key2 => value2, ... }
     # * Returns: formatted String

@@ -1442,7 +1442,7 @@ module Irc
         when User
           handle(:notice, data)
         else
-          # "server notice" (not from user, noone to reply to)
+          # "server notice" (not from user, no one to reply to)
           handle(:snotice, data)
         end
       when :KICK

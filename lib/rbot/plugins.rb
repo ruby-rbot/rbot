@@ -130,11 +130,11 @@ module Plugins
 
   welcome(WelcomeMessage)::
                          Called when the welcome message is received on
-                         joining a server succesfully.
+                         joining a server successfully.
 
   motd(MotdMessage)::
                          Called when the Message Of The Day is fully
-                         recevied from the server.
+                         received from the server.
 
   connect::              Called when a server is joined successfully, but
                          before autojoin channels are joined (no params)
@@ -325,7 +325,7 @@ module Plugins
     # This can be called multiple times for a plugin to handle multiple message
     # prefixes.
     #
-    # This command is now superceded by the #map() command, which should be used
+    # This command is now superseded by the #map() command, which should be used
     # instead whenever possible.
     #
     def register(cmd, opts={})
@@ -371,7 +371,7 @@ module Plugins
     # Directory name to be joined to the botclass to access data files. By
     # default this is the plugin name itself, but may be overridden, for
     # example by plugins that share their datafiles or for backwards
-    # compatibilty
+    # compatibility
     def dirname
       name
     end

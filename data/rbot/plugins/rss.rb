@@ -965,7 +965,7 @@ class RSSFeedsPlugin < Plugin
         first_run = !feed.last_success
         if (!first_run && @bot.config['rss.announce_timeout'] > 0 &&
            (Time.now - feed.last_success > @bot.config['rss.announce_timeout']))
-          debug "#{feed} wasn't polled for too long, supressing output"
+          debug "#{feed} wasn't polled for too long, suppressing output"
           first_run = true
         end
         oldxml = feed.xml ? feed.xml.dup : nil
@@ -1258,7 +1258,7 @@ class RSSFeedsPlugin < Plugin
         rescue RSS::Error => e
           errors << [parser, e, "parsing rss stream failed, oioi"]
         rescue => e
-          errors << [parser, e, "processing error occured, sorry =("]
+          errors << [parser, e, "processing error occurred, sorry =("]
         end
       end
       unless errors.empty?

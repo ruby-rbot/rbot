@@ -34,7 +34,7 @@ def normalize_po(fn)
     end
   end
 
-  # replace project-id-version placholder
+  # replace project-id-version placeholder
   modified |= content.sub!(/^("Project-Id-Version: )PACKAGE VERSION(\\n")$/) {
     "#{$1}rbot#{$2}"
   }

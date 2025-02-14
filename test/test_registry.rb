@@ -51,7 +51,7 @@ module RegistryHashInterfaceTests
     dbfile = @reg.filename
     assert_not_nil(dbfile)
     if not File.exists? dbfile
-      # dbm ext. are arbitary
+      # dbm ext. are arbitrary
       dbfile = Dir.glob(dbfile+'.*').first
     end
     assert_not_nil(dbfile)

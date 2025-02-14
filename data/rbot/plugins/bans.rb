@@ -128,7 +128,7 @@ class BansPlugin < Plugin
       when "add whitelist"
         return "bans add whitelist <hostmask> [#channel|all]: add the given hostmask to the whitelist. no autoaction will be triggered by users on the whitelist"
       when "add masshl"
-        return "masshl add <max_nicks|percentage> [action] [Xs/m/h/d] [#channel|all] [reason ...]: adds an massive highligh action. You can use both max and % in one trigger, the higher value will be taken. For two triggers in one channel, the one with higher requirements will be taken"
+        return "masshl add <max_nicks|percentage> [action] [Xs/m/h/d] [#channel|all] [reason ...]: adds an massive highlight action. You can use both max and % in one trigger, the higher value will be taken. For two triggers in one channel, the one with higher requirements will be taken"
       when "rm"
         return "bans rm <onjoin|badword|whitelist> <hostmask/regexp> [#channel], or bans rm <onjoin|badword|whitelist> index <num>: removes the specified onjoin or badword rule or whitelist entry. For masshl, bans rm masshl index [#channel|all]"
       when "list"

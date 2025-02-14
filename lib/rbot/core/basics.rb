@@ -125,7 +125,7 @@ class BasicsModule < CoreBotModule
     else
       @bot.set_quiet
     end
-    # Make sense when the commmand is given in private or in a non-quieted
+    # Make sense when the command is given in private or in a non-quieted
     # channel
     m.okay
   end
@@ -136,7 +136,7 @@ class BasicsModule < CoreBotModule
     else
       @bot.reset_quiet
     end
-    # Make sense when the commmand is given in private or in a non-quieted
+    # Make sense when the command is given in private or in a non-quieted
     # channel
     m.okay
   end

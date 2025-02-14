@@ -575,7 +575,7 @@ webservice.web_map '/ping',
   :action => :handle_ping,
   :auth_path => 'public'
 
-# executes arbitary bot commands
+# executes arbitrary bot commands
 webservice.web_map '/dispatch',
   :action => :handle_dispatch,
   :method => 'POST',

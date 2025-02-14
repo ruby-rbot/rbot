@@ -407,7 +407,7 @@ class HttpUtil
     return h
   end
 
-  # Internal method used to hanlde response _resp_ received when making a
+  # Internal method used to handle response _resp_ received when making a
   # request for URI _uri_.
   #
   # It follows redirects, optionally yielding them if option :yield is :all.

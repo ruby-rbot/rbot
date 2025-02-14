@@ -177,7 +177,7 @@ class Registry
       end
     end
 
-    # Returned instead of nil if key wasnt found.
+    # Returned instead of nil if key wasn't found.
     def set_default (default)
       @default = default
     end

@@ -290,7 +290,7 @@ class SearchPlugin < Plugin
       return
     end
 
-    debug "#{html.size} bytes of html recieved"
+    debug "#{html.size} bytes of html received"
     debug html
 
     candidates = html.match(GOOGLE_CALC_RESULT)

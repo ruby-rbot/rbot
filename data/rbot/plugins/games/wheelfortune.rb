@@ -480,7 +480,7 @@ class WheelOfFortune < Plugin
     when :wrong
       return
     when Numeric, :missing
-      # TODO may alter score depening on how many letters were guessed
+      # TODO may alter score depenping on how many letters were guessed
       # TODO what happens when the last hint reveals the whole answer?
       announce(m)
     when :gotit

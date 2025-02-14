@@ -155,7 +155,7 @@ end
 class QuizPlugin < Plugin
   Config.register Config::BooleanValue.new('quiz.dotted_nicks',
     :default => true,
-    :desc => "When true, nicks in the top X scores will be camouflaged to prevent IRC hilighting")
+    :desc => "When true, nicks in the top X scores will be camouflaged to prevent IRC highlighting")
 
   Config.register Config::ArrayValue.new('quiz.sources',
     :default => ['quiz.rbot'],
