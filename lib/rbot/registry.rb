@@ -30,7 +30,7 @@
 #   blah[:foo] = "flump"
 #   @registry[:blah] = blah
 #
-# If you don't need to store objects, and strictly want a persistant hash of
+# If you don't need to store objects, and strictly want a persistent hash of
 # strings, you can override the store/restore methods to suit your needs, for
 # example (in your plugin):
 #   def initialize
