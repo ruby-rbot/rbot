@@ -1333,7 +1333,7 @@ plugin.map 'rss change :what of :handle to :new',
 plugin.map 'rss change :what for :handle to :new',
   :action => 'change_rss',
   :auth_path => 'edit',
-  :requirements => { :what => /handle|url|format|type|refesh/ }
+  :requirements => { :what => /handle|url|format|type|refresh/ }
 plugin.map 'rss del :handle',
   :auth_path => 'edit:rm!',
   :action => 'del_rss'
