@@ -17,9 +17,7 @@ end
 
 unless File.respond_to?(:read)   # Ruby 1.6
   def File.read(fname)
-    open(fname) {|f|
-      return f.read
-    }
+    open(fname) { |f| return f.read }
   end
 end
 
@@ -32,9 +30,7 @@ unless Errno.const_defined?(:ENOTEMPTY)   # Windows?
 end
 
 def File.binread(fname)
-  open(fname, 'rb') {|f|
-    return f.read
-  }
+  open(fname, 'rb') { |f| return f.read }
 end
 
 # for corrupted Windows' stat(2)
@@ -82,7 +78,7 @@ class ConfigTable
   end
 
   def names
-    @items.map {|i| i.name }
+    @items.map { |i| i.name }
   end
 
   def each(&block)
@@ -104,8 +100,8 @@ class ConfigTable
 
   def remove(name)
     item = lookup(name)
-    @items.delete_if {|i| i.name == name }
-    @table.delete_if {|name, i| i.name == name }
+    @items.delete_if { |i| i.name == name }
+    @table.delete_if { |name, i| i.name == name }
     item
   end
 
@@ -126,13 +122,13 @@ class ConfigTable
         self[k] = v.strip
       end
     rescue Errno::ENOENT
-      setup_rb_error $!.message + "\n#{File.basename($0)} config first"
+      setup_rb_error $!.message + "\n#{File.basename($PROGRAM_NAME)} config first"
     end
   end
 
   def save
-    @items.each {|i| i.value }
-    File.open(savefile(), 'w') {|f|
+    @items.each { |i| i.value }
+    File.open(savefile(), 'w') { |f|
       @items.each do |i|
         f.printf "%s=%s\n", i.name, i.value if i.value? and i.value
       end
@@ -186,7 +182,7 @@ class ConfigTable
       siterubyver     = siteruby
       siterubyverarch = "$siterubyver/#{c['arch']}"
     end
-    parameterize = lambda {|path|
+    parameterize = lambda { |path|
       path.sub(/\A#{Regexp.quote(c['prefix'])}/, '$prefix')
     }
 
@@ -235,7 +231,7 @@ class ConfigTable
       PathItem.new('librubyverarch', 'path', librubyverarch,
                    'the directory for standard ruby extensions'),
       PathItem.new('siteruby', 'path', siteruby,
-          'the directory for version-independent aux ruby libraries'),
+                   'the directory for version-independent aux ruby libraries'),
       PathItem.new('siterubyver', 'path', siterubyver,
                    'the directory for aux ruby libraries'),
       PathItem.new('siterubyverarch', 'path', siterubyverarch,
@@ -281,7 +277,6 @@ class ConfigTable
     'archdir'          => 'librubyverarch',
     'site-ruby-common' => 'siteruby',     # For backward compatibility
     'site-ruby'        => 'siterubyver',  # For backward compatibility
-    'bin-dir'          => 'bindir',
     'bin-dir'          => 'bindir',
     'rb-dir'           => 'rbdir',
     'so-dir'           => 'sodir',
@@ -388,7 +383,7 @@ class ConfigTable
     private
 
     def check(path)
-      setup_rb_error "config: --#{@name} requires argument"  unless path
+      setup_rb_error "config: --#{@name} requires argument" unless path
       path[0,1] == '$' ? path : File.expand_path(path)
     end
   end
@@ -579,6 +574,7 @@ module FileOperations
     Dir.foreach(path) do |ent|
       next if ent == '.'
       next if ent == '..'
+
       entpath = "#{path}/#{ent}"
       if File.symlink?(entpath)
         remove_file entpath
@@ -600,9 +596,7 @@ module FileOperations
     begin
       File.rename src, dest
     rescue
-      File.open(dest, 'wb') {|f|
-        f.write File.binread(src)
-      }
+      File.open(dest, 'wb') { |f| f.write File.binread(src) }
       File.chmod File.stat(src).mode, dest
       File.unlink src
     end
@@ -628,26 +622,23 @@ module FileOperations
     realdest = File.join(realdest, File.basename(from)) if File.dir?(realdest)
     str = File.binread(from)
     if diff?(str, realdest)
-      verbose_off {
-        rm_f realdest if File.exist?(realdest)
-      }
-      File.open(realdest, 'wb') {|f|
-        f.write str
-      }
+      verbose_off { rm_f realdest if File.exist?(realdest) }
+      File.open(realdest, 'wb') { |f| f.write str }
       File.chmod mode, realdest
 
-      File.open("#{objdir_root()}/InstalledFiles", 'a') {|f|
+      File.open("#{objdir_root()}/InstalledFiles", 'a') do |f|
         if prefix
           f.puts realdest.sub(prefix, '')
         else
           f.puts realdest
         end
-      }
+      end
     end
   end
 
   def diff?(new_content, path)
     return true unless File.exist?(path)
+
     new_content != File.binread(path)
   end
 
@@ -670,19 +661,14 @@ module FileOperations
   end
 
   def files_of(dir)
-    Dir.open(dir) {|d|
-      return d.select {|ent| File.file?("#{dir}/#{ent}") }
-    }
+    Dir.open(dir) { |d| return d.select { |ent| File.file?("#{dir}/#{ent}") } }
   end
 
   DIR_REJECT = %w( . .. CVS SCCS RCS CVS.adm .svn )
 
   def directories_of(dir)
-    Dir.open(dir) {|d|
-      return d.select {|ent| File.dir?("#{dir}/#{ent}") } - DIR_REJECT
-    }
+    Dir.open(dir) { |d| return d.select { |ent| File.dir?("#{dir}/#{ent}") } - DIR_REJECT }
   end
-
 end
 
 
@@ -729,23 +715,16 @@ module HookScriptAPI
   end
 
   def srcentries(path = '.')
-    Dir.open("#{curr_srcdir()}/#{path}") {|d|
-      return d.to_a - %w(. ..)
-    }
+    Dir.open("#{curr_srcdir()}/#{path}") { |d| return d.to_a - %w(. ..) }
   end
 
   def srcfiles(path = '.')
-    srcentries(path).select {|fname|
-      File.file?(File.join(curr_srcdir(), path, fname))
-    }
+    srcentries(path).select { |fname| File.file?(File.join(curr_srcdir(), path, fname)) }
   end
 
   def srcdirectories(path = '.')
-    srcentries(path).select {|fname|
-      File.dir?(File.join(curr_srcdir(), path, fname))
-    }
+    srcentries(path).select { |fname| File.dir?(File.join(curr_srcdir(), path, fname)) }
   end
-
 end
 
 
@@ -755,14 +734,14 @@ class ToplevelInstaller
   Copyright = 'Copyright (c) 2000-2005 Minero Aoki'
 
   TASKS = [
-    [ 'all',      'do config, setup, then install' ],
-    [ 'config',   'saves your configurations' ],
-    [ 'show',     'shows current configuration' ],
-    [ 'setup',    'compiles ruby extensions and others' ],
-    [ 'install',  'installs files' ],
-    [ 'test',     'run all tests in test/' ],
-    [ 'clean',    "does `make clean' for each extension" ],
-    [ 'distclean',"does `make distclean' for each extension" ]
+    ['all',       'do config, setup, then install'],
+    ['config',    'saves your configurations'],
+    ['show',      'shows current configuration'],
+    ['setup',     'compiles ruby extensions and others'],
+    ['install',   'installs files'],
+    ['test',      'run all tests in test/'],
+    ['clean',     "does `make clean' for each extension"],
+    ['distclean', "does `make distclean' for each extension"]
   ]
 
   def ToplevelInstaller.invoke
@@ -771,18 +750,18 @@ class ToplevelInstaller
     config.load_multipackage_entries if multipackage?
     config.fixup
     klass = (multipackage?() ? ToplevelInstallerMulti : ToplevelInstaller)
-    klass.new(File.dirname($0), config).invoke
+    klass.new(File.dirname($PROGRAM_NAME), config).invoke
   end
 
   def ToplevelInstaller.multipackage?
-    File.dir?(File.dirname($0) + '/packages')
+    File.dir?("#{File.dirname($PROGRAM_NAME)}/packages")
   end
 
   def ToplevelInstaller.load_rbconfig
     if arg = ARGV.detect {|arg| /\A--rbconfig=/ =~ arg }
       ARGV.delete(arg)
       load File.expand_path(arg.split(/=/, 2)[1])
-      $".push 'rbconfig.rb'
+      $LOADED_FEATURES.push 'rbconfig.rb'
     else
       require 'rbconfig'
     end
@@ -857,7 +836,7 @@ class ToplevelInstaller
   #
 
   def parsearg_global
-    while arg = ARGV.shift
+    while (arg = ARGV.shift)
       case arg
       when /\A\w+\z/
         setup_rb_error "invalid task: #{arg}" unless valid_task?(arg)
@@ -870,7 +849,7 @@ class ToplevelInstaller
         print_usage $stdout
         exit 0
       when '--version'
-        puts "#{File.basename($0)} version #{Version}"
+        puts "#{File.basename($PROGRAM_NAME)} version #{Version}"
         exit 0
       when '--copyright'
         puts Copyright
@@ -887,7 +866,7 @@ class ToplevelInstaller
   end
 
   def valid_task_re
-    @valid_task_re ||= /\A(?:#{TASKS.map {|task,desc| task }.join('|')})\z/
+    @valid_task_re ||= /\A(?:#{TASKS.map { |task,desc| task }.join('|')})\z/
   end
 
   def parsearg_no_options
@@ -907,7 +886,7 @@ class ToplevelInstaller
     evalopt = []
     set = []
     @config.config_opt = []
-    while i = ARGV.shift
+    while (i = ARGV.shift)
       if /\A--?\z/ =~ i
         @config.config_opt = ARGV.dup
         break
@@ -932,7 +911,7 @@ class ToplevelInstaller
   def parsearg_install
     @config.no_harm = false
     @config.install_prefix = ''
-    while a = ARGV.shift
+    while (a = ARGV.shift)
       case a
       when '--no-harm'
         @config.no_harm = true
@@ -948,22 +927,22 @@ class ToplevelInstaller
 
   def print_usage(out)
     out.puts 'Typical Installation Procedure:'
-    out.puts "  $ ruby #{File.basename $0} config"
-    out.puts "  $ ruby #{File.basename $0} setup"
-    out.puts "  # ruby #{File.basename $0} install (may require root privilege)"
+    out.puts "  $ ruby #{File.basename $PROGRAM_NAME} config"
+    out.puts "  $ ruby #{File.basename $PROGRAM_NAME} setup"
+    out.puts "  # ruby #{File.basename $PROGRAM_NAME} install (may require root privilege)"
     out.puts
     out.puts 'Detailed Usage:'
-    out.puts "  ruby #{File.basename $0} <global option>"
-    out.puts "  ruby #{File.basename $0} [<global options>] <task> [<task options>]"
+    out.puts "  ruby #{File.basename $PROGRAM_NAME} <global option>"
+    out.puts "  ruby #{File.basename $PROGRAM_NAME} [<global options>] <task> [<task options>]"
 
     fmt = "  %-24s %s\n"
     out.puts
     out.puts 'Global options:'
-    out.printf fmt, '-q,--quiet',   'suppress message outputs'
-    out.printf fmt, '   --verbose', 'output messages verbosely'
-    out.printf fmt, '   --help',    'print this message'
-    out.printf fmt, '   --version', 'print version and quit'
-    out.printf fmt, '   --copyright',  'print copyright and quit'
+    out.printf fmt, '-q,--quiet',     'suppress message outputs'
+    out.printf fmt, '   --verbose',   'output messages verbosely'
+    out.printf fmt, '   --help',      'print this message'
+    out.printf fmt, '   --version',   'print version and quit'
+    out.printf fmt, '   --copyright', 'print copyright and quit'
     out.puts
     out.puts 'Tasks:'
     TASKS.each do |name, desc|
@@ -980,7 +959,7 @@ class ToplevelInstaller
     out.puts
     out.puts 'Options for INSTALL:'
     out.printf fmt, '--no-harm', 'only display what to do if given', 'off'
-    out.printf fmt, '--prefix=path',  'install path prefix', ''
+    out.printf fmt, '--prefix=path', 'install path prefix', ''
     out.puts
   end
 
@@ -1018,7 +997,6 @@ class ToplevelInstaller
   def exec_distclean
     @installer.exec_distclean
   end
-
 end   # class ToplevelInstaller
 
 
@@ -1030,6 +1008,7 @@ class ToplevelInstallerMulti < ToplevelInstaller
     super
     @packages = directories_of("#{@ardir}/packages")
     raise 'no package exists' if @packages.empty?
+
     @root_installer = Installer.new(@config, @ardir, File.expand_path('.'))
   end
 
@@ -1044,6 +1023,7 @@ class ToplevelInstallerMulti < ToplevelInstaller
 
   def packages=(list)
     raise 'package list is empty' if list.empty?
+
     list.each do |name|
       raise "directory packages/#{name} does not exist"\
               unless File.dir?("#{@ardir}/packages/#{name}")
@@ -1055,21 +1035,20 @@ class ToplevelInstallerMulti < ToplevelInstaller
     @installers = {}
     @packages.each do |pack|
       @installers[pack] = Installer.new(@config,
-                                       "#{@ardir}/packages/#{pack}",
-                                       "packages/#{pack}")
+                                        "#{@ardir}/packages/#{pack}",
+                                        "packages/#{pack}")
     end
     with    = extract_selection(config('with'))
     without = extract_selection(config('without'))
-    @selected = @installers.keys.select {|name|
-                  (with.empty? or with.include?(name)) \
-                      and not without.include?(name)
-                }
+    @selected = @installers.keys.select do |name|
+      (with.empty? or with.include?(name)) and not without.include?(name)
+    end
   end
 
   def extract_selection(list)
     a = list.split(/,/)
     a.each do |name|
-      setup_rb_error "no such package: #{name}"  unless @installers.key?(name)
+      setup_rb_error "no such package: #{name}" unless @installers.key?(name)
     end
     a
   end
@@ -1152,7 +1131,6 @@ class ToplevelInstallerMulti < ToplevelInstaller
   def no_harm?
     @config.no_harm?
   end
-
 end   # class ToplevelInstallerMulti
 
 
@@ -1266,6 +1244,7 @@ class Installer
   def update_shebang_line(path)
     return if no_harm?
     return if config('shebang') == 'never'
+
     old = Shebang.load(path)
     if old
       $stderr.puts "warning: #{path}: Shebang line includes too many args.  It is not portable and your program may not work." if old.args.size > 1
@@ -1273,16 +1252,17 @@ class Installer
       return if new.to_s == old.to_s
     else
       return unless config('shebang') == 'all'
+
       new = Shebang.new(config('rubypath'))
     end
     $stderr.puts "updating shebang: #{File.basename(path)}" if verbose?
-    open_atomic_writer(path) {|output|
-      File.open(path, 'rb') {|f|
+    open_atomic_writer(path) do |output|
+      File.open(path, 'rb') do |f|
         f.gets if old   # discard
         output.puts new.to_s
         output.print f.read
-      }
-    }
+      end
+    end
   end
 
   def new_shebang(old)
@@ -1292,12 +1272,13 @@ class Installer
       Shebang.new(config('rubypath'), old.args[1..-1])
     else
       return old unless config('shebang') == 'all'
+
       Shebang.new(config('rubypath'))
     end
   end
 
   def open_atomic_writer(path, &block)
-    tmpfile = File.basename(path) + '.tmp'
+    tmpfile = "#{File.basename(path)}.tmp"
     begin
       File.open(tmpfile, 'wb', &block)
       File.rename tmpfile, File.basename(path)
@@ -1309,10 +1290,9 @@ class Installer
   class Shebang
     def Shebang.load(path)
       line = nil
-      File.open(path) {|f|
-        line = f.gets
-      }
+      File.open(path) { |f| line = f.gets }
       return nil unless /\A#!/ =~ line
+
       parse(line)
     end
 
@@ -1386,7 +1366,7 @@ class Installer
   def rubyextensions(dir)
     ents = glob_select("*.#{@config.dllext}", targetfiles())
     if ents.empty?
-      setup_rb_error "no ruby extension exists: 'ruby #{$0} setup' first"
+      setup_rb_error "no ruby extension exists: 'ruby #{$PROGRAM_NAME} setup' first"
     end
     ents
   end
@@ -1396,12 +1376,12 @@ class Installer
   end
 
   def mapdir(ents)
-    ents.map {|ent|
+    ents.map do |ent|
       if File.exist?(ent)
       then ent                         # objdir
       else "#{curr_srcdir()}/#{ent}"   # srcdir
       end
-    }
+    end
   end
 
   # picked up many entries from cvs-1.11.1/src/ignore.c
@@ -1418,19 +1398,19 @@ class Installer
   end
 
   def hookfiles
-    %w( pre-%s post-%s pre-%s.rb post-%s.rb ).map {|fmt|
+    %w( pre-%s post-%s pre-%s.rb post-%s.rb ).map { |fmt|
       %w( config setup install clean ).map {|t| sprintf(fmt, t) }
     }.flatten
   end
 
   def glob_select(pat, ents)
     re = globs2re([pat])
-    ents.select {|ent| re =~ ent }
+    ents.select { |ent| re =~ ent }
   end
 
   def glob_reject(pats, ents)
     re = globs2re(pats)
-    ents.reject {|ent| re =~ ent }
+    ents.reject { |ent| re =~ ent }
   end
 
   GLOB2REGEX = {
@@ -1442,7 +1422,7 @@ class Installer
 
   def globs2re(pats)
     /\A(?:#{
-      pats.map {|pat| pat.gsub(/[\.\$\#\*]/) {|ch| GLOB2REGEX[ch] } }.join('|')
+      pats.map { |pat| pat.gsub(/[\.\$\#\*]/) { |ch| GLOB2REGEX[ch] } }.join('|')
     })\z/
   end
 
@@ -1528,14 +1508,14 @@ class Installer
   end
 
   def traverse(task, rel, mid)
-    dive_into(rel) {
+    dive_into(rel) do
       run_hook "pre-#{task}"
       __send__ mid, rel.sub(%r[\A.*?(?:/|\z)], '')
       directories_of(curr_srcdir()).each do |d|
         traverse task, "#{rel}/#{d}", mid
       end
       run_hook "post-#{task}"
-    }
+    end
   end
 
   def dive_into(rel)
@@ -1545,26 +1525,27 @@ class Installer
     Dir.mkdir dir unless File.dir?(dir)
     prevdir = Dir.pwd
     Dir.chdir dir
-    $stderr.puts '---> ' + rel if verbose?
+    $stderr.puts "---> #{rel}" if verbose?
     @currdir = rel
     yield
     Dir.chdir prevdir
-    $stderr.puts '<--- ' + rel if verbose?
+    $stderr.puts "<--- #{rel}" if verbose?
     @currdir = File.dirname(rel)
   end
 
   def run_hook(id)
     path = [ "#{curr_srcdir()}/#{id}",
-             "#{curr_srcdir()}/#{id}.rb" ].detect {|cand| File.file?(cand) }
+             "#{curr_srcdir()}/#{id}.rb" ].detect { |cand| File.file?(cand) }
     return unless path
+
     begin
       instance_eval File.read(path), path, 1
     rescue
       raise if $DEBUG
+
       setup_rb_error "hook #{path} failed:\n" + $!.message
     end
   end
-
 end   # class Installer
 
 
@@ -1574,13 +1555,14 @@ def setup_rb_error(msg)
   raise SetupError, msg
 end
 
-if $0 == __FILE__
+if $PROGRAM_NAME == __FILE__
   begin
     ToplevelInstaller.invoke
   rescue SetupError
     raise if $DEBUG
+
     $stderr.puts $!.message
-    $stderr.puts "Try 'ruby #{$0} --help' for detailed usage."
+    $stderr.puts "Try 'ruby #{$PROGRAM_NAME} --help' for detailed usage."
     exit 1
   end
 end
