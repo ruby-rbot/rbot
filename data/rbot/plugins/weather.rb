@@ -81,7 +81,7 @@ class WeatherPlugin < Plugin
     :desc => "Units to be used by default in Weather Underground reports")
 
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "nws"
       "weather nws <station> => display the current conditions at the location specified by the NOAA National Weather Service station code <station> ( lookup your station code at http://www.nws.noaa.gov/data/current_obs/ )"

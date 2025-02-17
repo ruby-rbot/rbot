@@ -7,7 +7,7 @@
 #----------------------------------------------------------------#
 
 class VanDalePlugin < Plugin
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "vandale [<word>] => Look up in the VanDale dictionary"
   end
   def privmsg(m)

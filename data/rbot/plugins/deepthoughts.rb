@@ -76,7 +76,7 @@ THOUGHTS = [
 ]
 
 class DeepThoughts < Plugin
-    def help(plugin, topic="")
+    def help(plugin, topic = '')
         "deepthought => think a deep thought."
     end
 

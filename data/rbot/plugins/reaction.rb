@@ -195,7 +195,7 @@ class ReactionPlugin < Plugin
     @registry[:reactions] = @reactions
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     if plugin.to_sym == :react
       return "react to <trigger> with <reply> [at <chance> chance] => " +
       "create a new reaction to expression <trigger> to which the bot will reply <reply>, optionally at chance <chance>, " +

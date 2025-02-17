@@ -456,7 +456,7 @@ class ExcusePlugin < Plugin
 "Keyboard Actuator Failure.  Order and Replace."
 ]
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "excuse => supply a random excuse"
   end
 

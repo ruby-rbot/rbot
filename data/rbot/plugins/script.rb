@@ -33,7 +33,7 @@ class ScriptPlugin < Plugin
   end
 
 
-  def help( plugin, topic="" )
+  def help( plugin, topic = '' )
     case topic
     when "add"
       "Scripts are little Ruby programs that run in the context of the script plugin. You can access @bot (class Irc::Bot), m (class Irc::PrivMessage), user (class String, either the first argument, or if missing the sourcenick), and args (class Array, an array of arguments). Example: 'script add greet m.reply( 'Hello ' + user )'. Invoke the script just like a plugin: '<botnick>: greet'."

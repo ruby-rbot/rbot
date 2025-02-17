@@ -351,7 +351,7 @@ class PollPlugin < Plugin
     }) + options + outcome)
   end
 
-  def help(plugin,topic="")
+  def help(plugin,topic = '')
     case topic
     when "start"
       _("poll [start] 'my question' 'answer1' 'answer2' ['answer3' ...] " +

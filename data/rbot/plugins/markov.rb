@@ -327,7 +327,7 @@ class MarkovPlugin < Plugin
     end
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     topic, subtopic = topic.split
 
     case topic

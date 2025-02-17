@@ -24,7 +24,7 @@ class YouTubePlugin < Plugin
     :default => true,
     :desc => "Should the bot display alternative URLs (swf, rstp) for YouTube videos?")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     'youtube [search] <query> : searches youtube videos | youtube info <id> : returns description and video links'
   end
 

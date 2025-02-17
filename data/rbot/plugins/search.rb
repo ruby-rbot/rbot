@@ -46,7 +46,7 @@ class SearchPlugin < Plugin
     :default => 1,
     :desc => "When set to n > 0, the bot will return the first paragraph from the first n wikipedia search hits")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "ddg"
       "Use '#{topic} <string>' to return a search or calculation from " +

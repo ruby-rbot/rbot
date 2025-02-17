@@ -6,15 +6,15 @@
 class RotPlugin < Plugin
   def initialize
     super
-    @bot.register_filter(:rot13) { |s|
+    @bot.register_filter(:rot13) do |s|
       ss = s.dup
-      ss[:text] = s[:text].tr("A-Za-z", "N-ZA-Mn-za-m")
+      ss[:text] = s[:text].tr('A-Za-z', 'N-ZA-Mn-za-m')
       ss
-    }
+    end
   end
 
-  def help(plugin, topic="")
-    "rot13 <string> => encode <string> to rot13 or back"
+  def help(plugin, topic = '')
+    'rot13 <string> => encode <string> to rot13 or back'
   end
 
   def rot13(m, params)

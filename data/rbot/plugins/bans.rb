@@ -103,7 +103,7 @@ class BansPlugin < Plugin
     @registry[:masshl] = Array.new unless @registry.has_key? :masshl
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when "ban"
       return "ban <nick/hostmask> [Xs/m/h/d] [#channel]: ban a user from the given channel for the given amount of time. default is forever, on the current channel"

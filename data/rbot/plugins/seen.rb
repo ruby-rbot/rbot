@@ -34,7 +34,7 @@ class SeenPlugin < Plugin
     :default => [ "^no u$" ],
     :desc => _("Strings/regexes that you'd like to ignore for 'last message' purposes"))
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     _("seen <nick> => have you seen, or when did you last see <nick>")
   end
 

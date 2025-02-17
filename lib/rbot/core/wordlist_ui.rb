@@ -6,7 +6,7 @@
 # Author:: Giuseppe "Oblomov" Bilotta <giuseppe.bilotta@gmail.com>
 
 class WordlistModule < CoreBotModule
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     _("wordlist list [<pattern>] => list wordlists (matching <pattern>)")
   end
 

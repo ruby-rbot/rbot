@@ -360,7 +360,7 @@ class AuthModule < CoreBotModule
     }
   end
 
-  def help(cmd, topic="")
+  def help(cmd, topic = '')
     case cmd
     when "login"
       return _("login [<botuser>] [<pass>]: logs in to the bot as botuser <botuser> with password <pass>. When using the full form, you must contact the bot in private. <pass> can be omitted if <botuser> allows login-by-mask and your netmask is among the known ones. if <botuser> is omitted too autologin will be attempted")

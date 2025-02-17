@@ -575,7 +575,7 @@ class RSSFeedsPlugin < Plugin
     }
   end
 
-  def help(plugin,topic="")
+  def help(plugin,topic = '')
     case topic
     when "show"
       "rss show #{Bold}handle#{Bold} [#{Bold}limit#{Bold}] : show #{Bold}limit#{Bold} (default: 5, max: 15) entries from rss #{Bold}handle#{Bold}; #{Bold}limit#{Bold} can also be in the form a..b, to display a specific range of items"

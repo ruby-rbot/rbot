@@ -18,7 +18,7 @@ class RoulettePlugin < Plugin
     @last = ''
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "roulette => play russian roulette - starts a new game if one isn't already running. One round in a six chambered gun. Take turns to say roulette to the bot, until somebody dies. roulette reload => force the gun to reload, roulette stats => show stats from all games, roulette stats <player> => show stats for <player>, roulette clearstats => clear stats (config level auth required), roulette spin => spins the cylinder"
   end
 

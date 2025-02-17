@@ -25,7 +25,7 @@ class HttpPlugin < Plugin
     @http_server.shutdown
     super
   end
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "no help yet"
   end
   def privmsg(m)

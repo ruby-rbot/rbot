@@ -11,7 +11,7 @@
 
 class QPlugin < Plugin
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when ""
       return "qauth plugin: handles Q auths. topics set, identify, register"

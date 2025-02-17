@@ -420,7 +420,7 @@ class ImdbPlugin < Plugin
     :default => false,
     :desc => "Whether searching movies by person/year should also return TV series")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when "movies"
       "movies by <who> in <years> [as <role>] => display the movies in the <years> where which <who> was <role>; <role> can be one of actor, actress, director or anything: if it's omitted, the role is defined by the prefix: \"movies by ...\" implies director, \"movies with ...\" implies actor or actress; the years can be specified as \"in the 60s\" or as \"in 1953\""

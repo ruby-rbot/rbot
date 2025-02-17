@@ -21,7 +21,7 @@ class RoshamboPlugin < Plugin
     @plays = @beats.keys
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "roshambo <rock|paper|scissors> or rps <rock|paper|scissors> => play roshambo"
   end
 

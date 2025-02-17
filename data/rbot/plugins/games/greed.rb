@@ -17,7 +17,7 @@ class Greed < Plugin
     @players = []
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "Simple dice game. Rules: https://en.wikipedia.org/wiki/Greed_(dice_game)"
   end
 

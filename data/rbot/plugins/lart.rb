@@ -88,7 +88,7 @@ class LartPlugin < Plugin
     @registry.flush
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "Lart: The lart plugin allows you to lart/praise someone in the channel. You can also add new larts and new praises as well as delete them. For the curious, LART is an acronym for Luser Attitude Readjustment Tool. Usage: lart <who> [<reason>] -- larts <who> for <reason>. praise <who> [<reason>] -- praises <who> for <reason>. [add|rm][lart|praise] -- Add or remove a lart or praise."
   end
 

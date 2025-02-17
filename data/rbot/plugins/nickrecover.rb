@@ -11,28 +11,29 @@
 # in case it couldn't be achieved.
 
 class NickRecoverPlugin < Plugin
-
-  Config.register Config::IntegerValue.new('irc.nick_retry',
+  Config.register Config::IntegerValue.new(
+    'irc.nick_retry',
     :default => 60, :valiedate => Proc.new { |v| v >= 0 },
     :on_change => Proc.new do |bot, v|
-      if v > 0
+      if v.positive?
         bot.plugin['nickrecover'].start_recovery(v)
       else
         bot.plugin['nickrecover'].stop_recovery
       end
     end, :requires_restart => false,
-    :desc => _("Time in seconds to wait between attempts to recover the nick. set to 0 to disable nick recovery."))
+    :desc => _('Time in seconds to wait between attempts to recover the nick. set to 0 to disable nick recovery.')
+  )
 
-  def help(plugin,topic="")
+  def help(plugin,topic = '')
     [
-      _("the nickrecover plugin takes care of recovering the bot nick by trying to change nick until it succeeds."),
-      _("the plugin waits irc.nick_retry seconds between attempts."),
-      _("set irc.nick_retry to 0 to disable it.")
+      _('the nickrecover plugin takes care of recovering the bot nick by trying to change nick until it succeeds.'),
+      _('the plugin waits irc.nick_retry seconds between attempts.'),
+      _('set irc.nick_retry to 0 to disable it.')
     ].join(' ')
   end
 
   def enabled?
-    @bot.config['irc.nick_retry'] > 0
+    @bot.config['irc.nick_retry'].positive?
   end
 
   def poll_time
@@ -52,11 +53,9 @@ class NickRecoverPlugin < Plugin
   end
 
   def stop_recovery
-    begin
-      @bot.timer.remove(@recovery) if @recovery
-    ensure
-      @recovery = nil
-    end
+    @bot.timer.remove(@recovery) if @recovery
+  ensure
+    @recovery = nil
   end
 
   def start_recovery(time=self.poll_time)
@@ -65,7 +64,7 @@ class NickRecoverPlugin < Plugin
         @bot.timer.reschedule(@recovery, poll_time)
         return
       rescue
-        @recovery=nil
+        @recovery = nil
       end
     end
     @recovery = @bot.timer.add(time) do
@@ -86,6 +85,7 @@ class NickRecoverPlugin < Plugin
 
   def nick(m)
     return unless m.address?
+
     # if recovery is enabled and the nick is not the wanted nick,
     # launch the recovery process. Stop it otherwise
     if enabled? and m.newnick.downcase != wanted_nick.downcase
@@ -98,8 +98,6 @@ class NickRecoverPlugin < Plugin
   def cleanup
     stop_recovery
   end
-
 end
 
 plugin = NickRecoverPlugin.new
-

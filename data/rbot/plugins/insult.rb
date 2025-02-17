@@ -207,7 +207,7 @@ class InsultPlugin < Plugin
 "anal warts",
 ]
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     return "[msg]insult me|<person> => insult you or <person>. msginsult insults in private"
   end
 

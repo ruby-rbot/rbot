@@ -1,13 +1,13 @@
 class ModesPlugin < Plugin
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     return "'op [<user>] [<channel>]' => grant user> (if omitted yourself) ops in <channel> (or in the current channel if no channel is specified). Use deop instead of op to remove the privilege."
   end
 
   def op(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "+o")
+    do_mode(m, channel, user, '+o')
   end
 
   def opme(m, params)
@@ -18,7 +18,7 @@ class ModesPlugin < Plugin
   def deop(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "-o")
+    do_mode(m, channel, user, '-o')
   end
 
   def deopme(m, params)
@@ -29,7 +29,7 @@ class ModesPlugin < Plugin
   def hop(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "+h")
+    do_mode(m, channel, user, '+h')
   end
 
   def hopme(m, params)
@@ -40,7 +40,7 @@ class ModesPlugin < Plugin
   def dehop(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "-h")
+    do_mode(m, channel, user, '-h')
   end
 
   def dehopme(m, params)
@@ -51,7 +51,7 @@ class ModesPlugin < Plugin
   def voice(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "+v")
+    do_mode(m, channel, user, '+v')
   end
 
   def voiceme(m, params)
@@ -62,7 +62,7 @@ class ModesPlugin < Plugin
   def devoice(m, params)
     channel = params[:channel]
     user = params[:user]
-    do_mode(m, channel, user, "-v")
+    do_mode(m, channel, user, '-v')
   end
 
   def devoiceme(m, params)
@@ -73,7 +73,7 @@ class ModesPlugin < Plugin
   def do_mode(m, channel, user, mode)
     unless channel
       if m.private?
-        target = user.nil? ? "you" : user
+        target = user.nil? ? 'you' : user
         m.reply "You should tell me where you want me to #{mode} #{target}."
         return
       else
@@ -83,14 +83,12 @@ class ModesPlugin < Plugin
       channel = m.server.channel(channel)
 
       unless channel.has_user?(@bot.nick)
-        m.reply "I am not in that channel"
-	return
+        m.reply 'I am not in that channel'
+        return
       end
     end
 
-    unless user
-      user = m.sourcenick
-    end
+    user ||= m.sourcenick
 
     m.okay unless channel == m.channel.to_s
     @bot.mode(channel, mode, user)
@@ -98,17 +96,16 @@ class ModesPlugin < Plugin
 end
 
 plugin = ModesPlugin.new
-plugin.map("op [:user] [:channel]")
-plugin.map("opme [:channel]") # For backwards compatibility with 0.9.10
-plugin.map("deop [:user] [:channel]")
-plugin.map("deopme [:channel]") # For backwards compatibility with 0.9.10
-plugin.map("hop [:user] [:channel]")
-plugin.map("hopme [:channel]")
-plugin.map("dehop [:user] [:channel]")
-plugin.map("dehopme [:channel]")
-plugin.map("voice [:user] [:channel]")
-plugin.map("voiceme [:channel]")
-plugin.map("devoice [:user] [:channel]")
-plugin.map("devoiceme [:channel]")
-plugin.default_auth("*",false)
-
+plugin.map('op [:user] [:channel]')
+plugin.map('opme [:channel]') # For backwards compatibility with 0.9.10
+plugin.map('deop [:user] [:channel]')
+plugin.map('deopme [:channel]') # For backwards compatibility with 0.9.10
+plugin.map('hop [:user] [:channel]')
+plugin.map('hopme [:channel]')
+plugin.map('dehop [:user] [:channel]')
+plugin.map('dehopme [:channel]')
+plugin.map('voice [:user] [:channel]')
+plugin.map('voiceme [:channel]')
+plugin.map('devoice [:user] [:channel]')
+plugin.map('devoiceme [:channel]')
+plugin.default_auth('*', false)

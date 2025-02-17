@@ -33,7 +33,7 @@ class TumblrPlugin < Plugin
   COMMENT = "&comment=%{desc}"
   TAGS = "&tags=%{tags}"
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "configure"
       "tumblr configure [<channel>]: show credentials used for channel <channel> (default: current).    tumblr configure [<channel>] <email> <password> [<group>] => post links from channel <channel> (default: current) to group <group> (default: name of channel) using the given tumblr credentials"

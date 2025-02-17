@@ -22,7 +22,7 @@ class OxfordPlugin < Plugin
     @base_url = "https://www.lexico.com"
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     'oxford <word>: check for <word> on the lexico english dictionary (powered by oxford english dictionary).'
   end
 

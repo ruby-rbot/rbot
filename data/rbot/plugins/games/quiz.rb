@@ -314,7 +314,7 @@ class QuizPlugin < Plugin
   end
 
 
-  def help( plugin, topic="" )
+  def help( plugin, topic = '' )
     if topic == "admin"
       _("Quiz game aministration commands (requires authentication): ") + [
         _("'quiz autoask <on/off>' => enable/disable autoask mode"),

@@ -915,7 +915,7 @@ module Plugins
     end
 
     # return help for +topic+ (call associated plugin's help method)
-    def help(topic="")
+    def help(topic = '')
       case topic
       when /fail(?:ed)?\s*plugins?.*(trace(?:back)?s?)?/
         # debug "Failures: #{@failed.inspect}"

@@ -65,7 +65,7 @@ class UrlPlugin < Plugin
     debug "no info hosts regexp set to #{@no_info_hosts}"
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "url info <url> => display link info for <url> (set url.display_link_info > 0 if you want the bot to do it automatically when someone writes an url), urls [<max>=4] => list <max> last urls mentioned in current channel, urls search [<max>=4] <regexp> => search for matching urls. In a private message, you must specify the channel to query, eg. urls <channel> [max], urls search <channel> [max] <regexp>"
   end
 

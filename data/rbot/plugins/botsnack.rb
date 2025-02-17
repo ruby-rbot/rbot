@@ -12,26 +12,20 @@
 #
 # TODO More replies
 
-
-
-
 class BotsnackPlugin < Plugin
-
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "botsnack => reward #{@bot.nick} for being good"
   end
 
-
   def snack(m, params)
     if m.public?
-      m.reply @bot.lang.get("thanks_X") % m.sourcenick
+      m.reply @bot.lang.get('thanks_X') % m.sourcenick
     else
-      m.reply @bot.lang.get("thanks")
+      m.reply @bot.lang.get('thanks')
     end
   end
 end
 
 plugin = BotsnackPlugin.new
 
-plugin.map "botsnack", :action => :snack, :thread => "yes" #so it won't lock
-
+plugin.map 'botsnack', :action => :snack, :thread => 'yes' # so it won't lock

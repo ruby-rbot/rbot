@@ -68,7 +68,7 @@ class PointsPlugin < Plugin
     points(m, params)
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "points module: Keeps track of internet points, infusing your pointless life with meaning. Listens to everyone's chat. <thing>++/<thing>-- => increase/decrease points for <thing>, points for <thing>? => show points for <thing>, pointstats => show best/worst, pointsdump => show everyone's points. Points are a community rating system - only in-channel messages can affect points and you cannot adjust your own."
   end
 

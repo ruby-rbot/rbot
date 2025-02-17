@@ -328,7 +328,7 @@ class WebHookPlugin < Plugin
     @registry[:repos] = Hash.new.merge @repos
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "watch"
       ["webhook watch #{Bold}repository#{Bold} #{Bold}filter#{Bold} [in #{Bold}\#channel#{Bold}]: announce webhook triggers matching the given repository, using the given output filter.",

@@ -66,7 +66,7 @@ class BashPlugin < Plugin
     :desc => "Which method the bot should use to access bash.org quotes: xml files or standard webpages")
 
   include REXML
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     [
       _("bash => print a random quote from bash.org"),
       _("bash quote_id => print that quote id from bash.org"),

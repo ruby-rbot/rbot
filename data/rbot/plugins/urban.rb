@@ -1,7 +1,7 @@
 class UrbanPlugin < Plugin
   URBAN = 'http://www.urbandictionary.com/define.php?term='
 
-  def help( plugin, topic="")
+  def help( plugin, topic = '')
     "urban [word] [n]: give the [n]th definition of [word] from urbandictionary.com. urbanday: give the word-of-the-day at urban"
   end
 
