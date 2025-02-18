@@ -10,13 +10,6 @@ require 'fileutils'
 
 require 'pp'
 
-unless Kernel.respond_to? :pretty_inspect
-  def pretty_inspect
-    PP.pp(self, '')
-  end
-  public :pretty_inspect
-end
-
 class Exception
   def pretty_print(q)
     q.group(1, "#<%s: %s" % [self.class, self.message], ">") {
