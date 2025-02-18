@@ -4,8 +4,6 @@
 #
 # :title: rbot core
 
-require 'thread'
-
 require 'etc'
 require 'date'
 require 'fileutils'
