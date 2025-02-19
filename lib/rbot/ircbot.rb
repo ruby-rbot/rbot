@@ -44,12 +44,11 @@ require 'rbot/language'
 require 'rbot/httputil'
 
 module Irc
-
 # Main bot class, which manages the various components, receives messages,
 # handles them or passes them to plugins, and contains core functionality.
 class Bot
-  COPYRIGHT_NOTICE = "(c) Giuseppe Bilotta and the rbot development team"
-  SOURCE_URL = "https://ruby-rbot.org"
+  COPYRIGHT_NOTICE = '(c) Giuseppe Bilotta and the rbot development team'
+  SOURCE_URL = 'https://ruby-rbot.org'
   # the bot's Auth data
   attr_reader :auth
 
@@ -962,19 +961,19 @@ class Bot
         if e.message.empty?
           oldtf = too_fast
           too_fast = [too_fast, 300].max
-          too_fast*= 2
+          too_fast *= 2
           log "Empty message from server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         quit_msg = "Unparsable Server Message: #{e.message.inspect}"
         retry
       rescue ServerError => e
-        quit_msg = "server ERROR: " + e.message
+        quit_msg = "server ERROR: #{e.message}"
         debug quit_msg
-        idx = e.message.index("connect too fast")
+        idx = e.message.index('connect too fast')
         debug "'connect too fast' @ #{idx}"
         if idx
           oldtf = too_fast
-          too_fast += (idx+1)*2
+          too_fast += (idx + 1) * 2
           log "Reconnecting too fast, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         idx = e.message.index(/a(uto)kill/i)
@@ -984,7 +983,7 @@ class Bot
           # if it's permanent or temporary, we just set a rather high
           # reconnection timeout
           oldtf = too_fast
-          too_fast += (idx+1)*5
+          too_fast += (idx + 1) * 5
           log "Killed by server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         retry
