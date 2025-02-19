@@ -990,9 +990,6 @@ class Bot
       rescue Exception => e
         error "non-net exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
-      rescue => e
-        fatal "unexpected exception: #{e.pretty_inspect}"
-        exit 2
       end
     end
   end
