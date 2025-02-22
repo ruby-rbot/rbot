@@ -60,7 +60,7 @@ task :define_po_rules do
     GetText.rgettext(source_files, new_pot_file)
 
     # only use the new pot file if it contains unique messages
-    if File.exists?(pot_file) && MSGCOMM && `#{MSGCOMM} --unique #{pot_file} #{new_pot_file}`.empty?
+    if File.exist?(pot_file) && MSGCOMM && `#{MSGCOMM} --unique #{pot_file} #{new_pot_file}`.empty?
       rm new_pot_file
     else
       mv new_pot_file, pot_file
@@ -88,7 +88,7 @@ task :define_po_rules do
     require 'gettext/utils'
     po_file, pot_file = t.name, t.source
     puts "#{pot_file} => #{po_file}"
-    if File.exists? po_file
+    if File.exist? po_file
       sh "#{MSGMERGE} --backup=off --update #{po_file} #{pot_file}"
     elsif MSGINIT
       locale = po_file[%r'^po/(.+)/.+\.po$', 1]

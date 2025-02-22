@@ -205,7 +205,7 @@ class QuizPlugin < Plugin
     # Read the winning messages file
     @win_messages = Array.new
     winfile = datafile 'win_messages'
-    if File.exists? winfile
+    if File.exist? winfile
       IO.foreach(winfile) { |line| @win_messages << line.chomp }
     else
       warning( "win_messages file not found!" )

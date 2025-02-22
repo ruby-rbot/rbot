@@ -218,7 +218,7 @@ class BackupRegistry
     return [] if not File.directory? folder
     Dir.chdir(folder) do
       Dir.glob(File.join('**', ext)).map do |name|
-        RegistryFile.new(folder, name) if File.exists?(name)
+        RegistryFile.new(folder, name) if File.exist?(name)
       end
     end
   end
@@ -329,7 +329,7 @@ end
 
 case ARGV[0]
 when 'backup'
-  if File.exists? options[:dbfile]
+  if File.exist? options[:dbfile]
     puts 'Backup file already exists.'
     exit 
   end
@@ -346,7 +346,7 @@ when 'backup'
   end
 
 when 'restore'
-  unless File.exists? options[:dbfile]
+  unless File.exist? options[:dbfile]
     puts 'Backup file does not exist.'
     exit 
   end

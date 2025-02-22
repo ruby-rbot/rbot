@@ -53,7 +53,7 @@ class LartPlugin < Plugin
     @praises = @registry[:praises]
 
     # for migrations try to read lart from bot data first (this is usually in ~/.rbot/lart:
-    if (not @larts or not @praises) and Dir.exists? datafile
+    if (not @larts or not @praises) and Dir.exist? datafile
       log "migrate existing larts or praises from #{datafile}"
 
       @larts = load_static_files(datafile, 'larts')

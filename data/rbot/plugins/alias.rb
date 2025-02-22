@@ -42,7 +42,7 @@ class AliasPlugin < Plugin
     unless @aliases
       # attempt to load aliases from data file yaml
       filename = File.join(datafile, 'aliases.yaml')
-      if File.exists? filename
+      if File.exist? filename
         begin
           @aliases = {}
           YAML.load_file(filename).each_pair do |a, c|

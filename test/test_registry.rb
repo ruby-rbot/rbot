@@ -50,13 +50,13 @@ module RegistryHashInterfaceTests
 
     dbfile = @reg.filename
     assert_not_nil(dbfile)
-    if not File.exists? dbfile
+    if not File.exist? dbfile
       # dbm ext. are arbitrary
       dbfile = Dir.glob(dbfile+'.*').first
     end
     assert_not_nil(dbfile)
 
-    assert(File.exists?(dbfile), 'expected database to exist')
+    assert(File.exist?(dbfile), 'expected database to exist')
 
     size_before = File.size(dbfile)
     @reg['bar'] = big_string

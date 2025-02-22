@@ -24,7 +24,7 @@ namespace :doc do
 
   desc "Remove generated documentation"
   task :clean do
-    rm_r doc_dir if File.exists?(doc_destination)
+    rm_r doc_dir if File.exist?(doc_destination)
   end
 
 end

@@ -134,7 +134,7 @@ class Bot
       def get_load_path(filename)
         @load_path.each do |path|
           file = File.join(path, filename) 
-          return file if File.exists?(file)
+          return file if File.exist?(file)
         end
       end
 
@@ -463,7 +463,7 @@ class WebServiceModule < CoreBotModule
       opts.merge! :SSLEnable => true
       cert = File.expand_path @bot.config['webservice.ssl_cert']
       key = File.expand_path @bot.config['webservice.ssl_key']
-      if File.exists? cert and File.exists? key
+      if File.exist? cert and File.exist? key
         debug 'using ssl certificate files'
         opts.merge!({
           :SSLCertificate => OpenSSL::X509::Certificate.new(File.read(cert)),
