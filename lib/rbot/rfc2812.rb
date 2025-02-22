@@ -957,7 +957,6 @@ module Irc
   # Clients should register Proc{}s to handle the various server events, and
   # the Client class will handle dispatch.
   class Client
-
     # the Server we're connected to
     attr_reader :server
     # the User representing us on that server
@@ -965,8 +964,10 @@ module Irc
 
     # Create a new Client instance
     def initialize
-      @server = Server.new         # The Server
-      @user = @server.user("*!*@*")     # The User representing the client on this Server
+      # The Server
+      @server = Server.new
+      # The User representing the client on this Server
+      @user = @server.user('*!*@*')
 
       @handlers = Hash.new
 
@@ -981,7 +982,7 @@ module Irc
     # Clear the server and reset the user
     def reset
       @server.clear
-      @user = @server.user("*!*@*")
+      @user = @server.user('*!*@*')
     end
 
     # key::   server event to handle
@@ -1041,7 +1042,7 @@ module Irc
 
       prefix, command, params = $2, $3, $5
 
-      if prefix != nil
+      unless prefix.nil?
         # Most servers will send a full nick!user@host prefix for
         # messages from users. Therefore, when the prefix doesn't match this
         # syntax it's usually the server hostname.
@@ -1051,36 +1052,32 @@ module Irc
         #
         if prefix =~ /^#{Regexp::Irc::BANG_AT}$/
           data[:source] = @server.user(prefix)
-        else
-          if @server.hostname
-            if @server.hostname != prefix
-              # TODO do we want to be able to differentiate messages that are passed on to us from /other/ servers?
-              debug "Origin #{prefix} for message\n\t#{serverstring.inspect}\nis neither a user hostmask nor the server hostname\nI'll pretend that it's from the server anyway"
-              data[:source] = @server
-            else
-              data[:source] = @server
-            end
-          else
-            @server.instance_variable_set(:@hostname, prefix)
-            data[:source] = @server
+        elsif @server.hostname
+          if @server.hostname != prefix
+            # TODO: do we want to be able to differentiate messages that are passed on to us from /other/ servers?
+            debug "Origin #{prefix} for message\n\t#{serverstring.inspect}\nis neither a user hostmask nor the server hostname\nI'll pretend that it's from the server anyway"
           end
+          data[:source] = @server
+        else
+          @server.instance_variable_set(:@hostname, prefix)
+          data[:source] = @server
         end
       end
 
       # split parameters in an array
       argv = []
-      params.scan(/(?!:)(\S+)|:(.*)/) { argv << ($1 || $2) } if params
+      params&.scan(/(?!:)(\S+)|:(.*)/) { argv << ($1 || $2) }
 
       if command =~ /^(\d+)$/ # Numeric replies
-	data[:target] = argv[0]
-        # A numeric reply /should/ be directed at the client, except when we're connecting with a used nick, in which case
-        # it's directed at '*'
+        data[:target] = argv[0]
+        # A numeric reply /should/ be directed at the client, except when we're
+        # connecting with a used nick, in which case it's directed at '*'
         not_us = !([@user.nick, '*'].include?(data[:target]))
         if not_us
           warning "Server reply #{serverstring.inspect} directed at #{data[:target]} instead of client (#{@user.nick})"
         end
 
-        num=command.to_i
+        num = command.to_i
         case num
         when RPL_WELCOME
           data[:message] = argv[1]
@@ -1164,16 +1161,16 @@ module Irc
           data[:channel] = chan = @server.channel(argv[2])
 
           users = []
-          argv[3].scan(/\S+/).each { |u|
-            # FIXME beware of servers that allow multiple prefixes
+          argv[3].scan(/\S+/).each do |u|
+            # FIXME: beware of servers that allow multiple prefixes
             if(u =~ /^([#{@server.supports[:prefix][:prefixes].join}])?(.*)$/)
               umode = $1
               user = $2
               users << [user, umode]
             end
-          }
+          end
 
-          users.each { |ar|
+          users.each do |ar|
             u = @server.user(ar[0])
             chan.add_user(u, :silent => true)
             debug "Adding user #{u}"
@@ -1182,7 +1179,7 @@ module Irc
               debug "\twith mode #{ar[1]} (#{ms})"
               chan.mode[ms].set(u)
             end
-          }
+          end
           @tmpusers += users
         when RPL_ENDOFNAMES
           data[:channel] = @server.channel(argv[1])
@@ -1245,9 +1242,9 @@ module Irc
           else
             warning "Server doesn't have an RFC compliant MOTD start."
           end
-          @motd = ""
+          @motd = ''
         when RPL_MOTD
-          if(argv[1] =~ /^-\s+(.*)$/)
+          if argv[1] =~ /^-\s+(.*)$/
             @motd << $1
             @motd << "\n"
           end
@@ -1262,7 +1259,7 @@ module Irc
           data[:message] = argv[-1]
           user.away = data[:message]
           handle(:away, data)
-	when RPL_WHOREPLY
+        when RPL_WHOREPLY
           data[:channel] = channel = @server.channel(argv[1])
           data[:user] = argv[2]
           data[:host] = argv[3]
@@ -1278,20 +1275,20 @@ module Irc
           else
             warning "Strange WHO reply: #{serverstring.inspect}"
           end
-          data[:hopcount], data[:real_name] = argv[7].split(" ", 2)
+          data[:hopcount], data[:real_name] = argv[7].split(' ', 2)
 
           user.user = data[:user]
           user.host = data[:host]
-          user.away = data[:away] # FIXME doesn't provide the actual message
-          # TODO ircop status
-          # TODO userserver
-          # TODO hopcount
+          user.away = data[:away] # FIXME: doesn't provide the actual message
+          # TODO: ircop status
+          # TODO: userserver
+          # TODO: hopcount
           user.real_name = data[:real_name]
 
           channel.add_user(user, :silent=>true)
-          data[:modes].map { |mode|
+          data[:modes].map do |mode|
             channel.mode[mode].set(user)
-          }
+          end
 
           handle(:who, data)
         when RPL_ENDOFWHO
@@ -1312,12 +1309,12 @@ module Irc
           @whois[:nick] = argv[1]
           @whois[:server] = argv[2]
           @whois[:server_info] = argv[-1]
-          # TODO update user info
+          # TODO: update user info
         when RPL_WHOISOPERATOR
           @whois ||= Hash.new
           @whois[:nick] = argv[1]
           @whois[:operator] = argv[-1]
-          # TODO update user info
+          # TODO: update user info
         when RPL_WHOISIDLE
           @whois ||= Hash.new
           @whois[:nick] = argv[1]
@@ -1368,32 +1365,32 @@ module Irc
         when RPL_CREATIONTIME
           data[:channel] = @server.channel(argv[1])
           data[:time] = Time.at(argv[2].to_i)
-          data[:channel].creation_time=data[:time]
+          data[:channel].creation_time = data[:time]
           handle(:creationtime, data)
         when RPL_CHANNEL_URL
           data[:channel] = @server.channel(argv[1])
           data[:url] = argv[2]
-          data[:channel].url=data[:url].dup
+          data[:channel].url = data[:url].dup
           handle(:channel_url, data)
         when ERR_NOSUCHNICK
           data[:target] = argv[1]
           data[:message] = argv[2]
           handle(:nosuchtarget, data)
-          if user = @server.get_user(data[:target])
+          if (user = @server.get_user(data[:target]))
             @server.delete_user(user)
           end
         when ERR_NOSUCHCHANNEL
           data[:target] = argv[1]
           data[:message] = argv[2]
           handle(:nosuchtarget, data)
-          if channel = @server.get_channel(data[:target])
+          if (channel = @server.get_channel(data[:target]))
             @server.delete_channel(channel)
           end
         else
           warning "Unknown message #{serverstring.inspect}"
           handle(:unknown, data)
         end
-	return # We've processed the numeric reply
+        return # We've processed the numeric reply
       end
 
       # Otherwise, the command should be a single word
@@ -1415,14 +1412,14 @@ module Irc
           # The previous may fail e.g. when the target is a server or something
           # like that (e.g. $<mask>). In any of these cases, we just use the
           # String as a target
-          # FIXME we probably want to explicitly check for the #<mask> $<mask>
+          # FIXME: we probably want to explicitly check for the #<mask> $<mask>
           data[:target] = argv[0]
         end
         data[:message] = argv[1]
         handle(:privmsg, data)
 
         # Now we split it
-        if data[:target].kind_of?(Channel)
+        if data[:target].is_a?(Channel)
           handle(:public, data)
         else
           handle(:msg, data)
@@ -1468,10 +1465,10 @@ module Irc
         handle(:part, data)
       when :QUIT
         data[:message] = argv[0]
-        data[:was_on] = @server.channels.inject(ChannelList.new) { |list, ch|
+        data[:was_on] = @server.channels.inject(ChannelList.new) do |list, ch|
           list << ch if ch.has_user?(data[:source])
           list
-        }
+        end
 
         @server.delete_user(data[:source])
 
@@ -1493,10 +1490,10 @@ module Irc
 
         handle(:invite, data)
       when :NICK
-        data[:is_on] = @server.channels.inject(ChannelList.new) { |list, ch|
+        data[:is_on] = @server.channels.inject(ChannelList.new) do |list, ch|
           list << ch if ch.has_user?(data[:source])
           list
-        }
+        end
 
         data[:newnick] = argv[0]
         data[:oldnick] = data[:source].nick.dup
@@ -1523,7 +1520,7 @@ module Irc
     # data:: hash containing data about the event, passed to the proc
     # call client's proc for an event, if they set one as a handler
     def handle(key, data)
-      if(@handlers.has_key?(key))
+      if (@handlers.has_key?(key))
         @handlers[key].call(data)
       end
     end
@@ -1536,7 +1533,7 @@ module Irc
     # but Type D modes
     def parse_mode(serverstring, argv, data)
       data[:target] = @server.user_or_channel(argv[0])
-      data[:modestring] = argv[1..-1].join(" ")
+      data[:modestring] = argv[1..].join(' ')
       # data[:modes] is an array where each element
       # is an array with two elements, the first of which
       # is either :set or :reset, and the second symbol
@@ -1549,14 +1546,14 @@ module Irc
         # User modes aren't currently handled internally,
         # but we still parse them and delegate to the client
         warning "Unhandled user mode message '#{serverstring}'"
-        argv[1..-1].each { |arg|
+        argv[1..].each do |arg|
           setting = arg[0].chr
-          if "+-".include?(setting)
-            setting = setting == "+" ? :set : :reset
-            arg[1..-1].each_byte { |b|
+          if '+-'.include?(setting)
+            setting = setting == '+' ? :set : :reset
+            arg[1..].each_byte do |b|
               m = b.chr.intern
               data[:modes] << [setting, m]
-            }
+            end
           else
             # Although typically User modes don't take an argument,
             # this is not true for all modes on all servers. Since
@@ -1567,16 +1564,16 @@ module Irc
             warning "Unhandled user mode parameter #{arg} found"
             data[:modes].last << arg
           end
-        }
+        end
       when Channel
         # array of indices in data[:modes] where parameters
         # are needed
         who_wants_params = []
 
-        modes = argv[1..-1].dup
+        modes = argv[1..].dup
         debug modes
         getting_args = false
-        while arg = modes.shift
+        while (arg = modes.shift)
           debug arg
           if getting_args
             # getting args for previously set modes
@@ -1626,14 +1623,14 @@ module Irc
           return
         end
 
-        data[:modes].each { |mode|
+        data[:modes].each do |mode|
           set, key, val = mode
           if val
             data[:target].mode[key].send(set, val)
           else
             data[:target].mode[key].send(set)
           end
-        }
+        end
       else
         warning "Ignoring #{data[:modestring]} for unrecognized target #{argv[0]} (#{data[:target].inspect})"
       end

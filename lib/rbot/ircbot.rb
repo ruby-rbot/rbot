@@ -1001,7 +1001,7 @@ class Bot
   # Type can be PRIVMSG, NOTICE, etc, but those you should really use the
   # relevant say() or notice() methods. This one should be used for IRCd
   # extensions you want to use in modules.
-  def sendmsg(original_type, original_where, original_message, options={})
+  def sendmsg(original_type, original_where, original_message, options = {})
 
     # filter message with sendmsg filters
     ds = DataStream.new original_message.to_s.dup,
@@ -1055,11 +1055,11 @@ class Bot
     when :join
       messages << [multi_line.gsub("\n", opts[:join_with])]
     when :split
-      multi_line.each_line { |line|
+      multi_line.each_line do |line|
         line.chomp!
         next unless(line.size > 0)
         messages << line
-      }
+      end
     else
       raise "Unknown :newlines option #{opts[:newlines]} while sending #{original_message.inspect}"
     end
