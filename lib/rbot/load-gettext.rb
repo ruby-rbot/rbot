@@ -10,14 +10,14 @@ end
 
 # try to load gettext, or provide fake gettext functions
 begin
-# workaround for gettext not checking empty LANGUAGE
-if ENV["LANGUAGE"] and ENV["LANGUAGE"].empty?
-  ENV.delete "LANGUAGE"
-end
+  # workaround for gettext not checking empty LANGUAGE
+  if ENV['LANGUAGE'] and ENV['LANGUAGE'].empty?
+    ENV.delete 'LANGUAGE'
+  end
 
   require 'gettext/version'
 
-  gettext_version = GetText::VERSION.split('.').map {|n| n.to_i}
+  gettext_version = GetText::VERSION.split('.').map { |n| n.to_i }
   class ::Array
     include Comparable # for Array#>=
   end
@@ -29,10 +29,12 @@ end
 
   include GetText
 
-  rbot_locale_path = File.join(Irc::Bot::Config.datadir,
+  rbot_locale_path = File.join(
+    Irc::Bot::Config.datadir,
     gettext_version < [2, 2, 0] ?
       "../locale/%{locale}/LC_MESSAGES/%{name}.mo" :
-      "../locale/%{lang}/LC_MESSAGES/%{name}.mo")
+      "../locale/%{lang}/LC_MESSAGES/%{name}.mo"
+  )
 
   if gettext_version < [2, 0, 0]
     add_default_locale_path(rbot_locale_path)
@@ -69,8 +71,6 @@ end
     retry
   end
 
-
-
   module GetText
     # patch for ruby-gettext 1.x to cope with anonymous modules used by rbot.
     # bound_targets and related methods are not used nor present in 2.x, and
@@ -88,7 +88,7 @@ end
 
     # GetText 2.1.0 does not provide current_textdomain_info,
     # so we adapt the one from 1.9.10
-    # TODO we would _really_ like to have a future-proof version of this,
+    # TODO: we would _really_ like to have a future-proof version of this,
     # but judging by the ruby gettext source code, this isn't going to
     # happen anytime soon.
     if not respond_to? :current_textdomain_info
@@ -101,23 +101,23 @@ end
         opts = {:with_messages => false, :with_paths => false, :out => STDOUT}.merge(options)
         ret = nil
         # this is for 2.1.0
-        TextDomainManager.each_text_domains(self) {|textdomain, lang|
+        TextDomainManager.each_text_domains(self) do |textdomain, lang|
           opts[:out].puts "TextDomain name: #{textdomain.name.inspect}"
           opts[:out].puts "TextDomain current locale: #{lang.to_s.inspect}"
           opts[:out].puts "TextDomain current mo path: #{textdomain.instance_variable_get(:@locale_path).current_path(lang).inspect}"
           if opts[:with_paths]
-            opts[:out].puts "TextDomain locale file paths:"
+            opts[:out].puts 'TextDomain locale file paths:'
             textdomain.locale_paths.each do |v|
               opts[:out].puts "  #{v}"
             end
           end
           if opts[:with_messages]
-            opts[:out].puts "The messages in the mo file:"
-            textdomain.current_mo.each{|k, v|
+            opts[:out].puts 'The messages in the mo file:'
+            textdomain.current_mo.each do |k, v|
               opts[:out].puts "  \"#{k}\": \"#{v}\""
-            }
+            end
           end
-        }
+        end
       end
     end
 
@@ -125,27 +125,24 @@ end
     # textdomain, and it's called by the language setting routines
     # in rbot
     def rbot_gettext_debug
-      begin
-        gettext_info = StringIO.new
-        current_textdomain_info(:out => gettext_info) # fails sometimes
-      rescue Exception
-        warning "failed to retrieve textdomain info. maybe an mo file doesn't exist for your locale."
-        debug $!
-      ensure
-        gettext_info.string.each_line { |l| debug l}
-      end
+      gettext_info = StringIO.new
+      current_textdomain_info(:out => gettext_info) # fails sometimes
+    rescue Exception
+      warning "failed to retrieve textdomain info. maybe an mo file doesn't exist for your locale."
+      debug $!
+    ensure
+      gettext_info.string.each_line { |l| debug l }
     end
   end
 
   log "gettext loaded"
-
 rescue LoadError, GetTextVersionError
   warning "failed to load ruby-gettext package: #{$!}; translations are disabled"
 
   # undefine GetText, in case it got defined because the error was caused by a
   # wrong version
   if defined?(GetText)
-    Object.module_eval { remove_const("GetText") }
+    Object.module_eval { remove_const('GetText') }
   end
 
   # dummy functions that return msg_id without translation
@@ -211,19 +208,19 @@ rescue LoadError, GetTextVersionError
     #
     #  (e.g.) "%{firstname}, %{familyname}" % {:firstname => "Masao", :familyname => "Mutoh"}
     def %(args)
-      if args.kind_of?(Hash)
+      if args.is_a?(Hash)
         ret = dup
-        args.each {|key, value|
+        args.each do |key, value|
           ret.gsub!(/\%\{#{key}\}/, value.to_s)
-        }
+        end
         ret
       else
         ret = gsub(/%\{/, '%%{')
         begin
-    ret._old_format_m(args)
+          ret._old_format_m(args)
         rescue ArgumentError
-    $stderr.puts "  The string:#{ret}"
-    $stderr.puts "  args:#{args.inspect}"
+          $stderr.puts "  The string:#{ret}"
+          $stderr.puts "  args:#{args.inspect}"
         end
       end
     end
