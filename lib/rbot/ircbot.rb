@@ -44,6 +44,9 @@ require 'rbot/language'
 require 'rbot/httputil'
 
 module Irc
+Irc::Error = Class.new(RuntimeError)
+Irc::PingError = Class.new(Irc::Error)
+
 # Main bot class, which manages the various components, receives messages,
 # handles them or passes them to plugins, and contains core functionality.
 class Bot
@@ -931,7 +934,7 @@ class Bot
 
           # Wait for messages and process them as they arrive. If nothing is
           # received, we call the ping_server() method that will PING the
-          # server if appropriate, or raise a TimeoutError if no PONG has been
+          # server if appropriate, or raise a Irc::PingError if no PONG has been
           # received in the user-chosen timeout since the last PING sent.
           if @socket.select(1)
             break unless reply = @socket.gets
@@ -950,7 +953,7 @@ class Bot
       rescue SystemExit
         @keep_looping = false
         break
-      rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, TimeoutError, SocketError => e
+      rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, Irc::PingError, SocketError => e
         error "network exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
         too_fast += 10 if valid_recv
@@ -1380,7 +1383,7 @@ class Bot
         if diff > act_timeout
           debug "no PONG from server in #{diff} seconds, reconnecting"
           # the actual reconnect is handled in the main loop:
-          raise TimeoutError, "no PONG from server in #{diff} seconds"
+          raise Irc::PingError, "no PONG from server in #{diff} seconds"
         end
       end
     end

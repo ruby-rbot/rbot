@@ -44,7 +44,7 @@ class WserverPlugin < Plugin
           end
         end
       end
-    rescue TimeoutError => e
+    rescue Timeout::Error => e
       m.reply "timed out connecting to #{uri.host}:#{uri.port} :("
     rescue RuntimeError => e
       redirect_count += 1

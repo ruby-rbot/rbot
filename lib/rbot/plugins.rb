@@ -625,7 +625,7 @@ module Plugins
 
         return :loaded
       rescue Exception => err
-        # rescue TimeoutError, StandardError, NameError, LoadError, SyntaxError => err
+        # rescue Irc::PingError, StandardError, NameError, LoadError, SyntaxError => err
         error report_error("#{desc}#{fname} load failed", err)
         bt = err.backtrace.select { |line|
           line.match(/^(\(eval\)|#{fname}):\d+/)
@@ -956,7 +956,7 @@ module Plugins
           begin
             return p.help(key, params)
           rescue Exception => err
-            #rescue TimeoutError, StandardError, NameError, SyntaxError => err
+            #rescue Irc::PingError, StandardError, NameError, SyntaxError => err
             error report_error("#{p.botmodule_class} #{p.name} help() failed:", err)
           end
         }
@@ -968,7 +968,7 @@ module Plugins
           begin
             return p.help(key, params)
           rescue Exception => err
-            #rescue TimeoutError, StandardError, NameError, SyntaxError => err
+            #rescue Irc::PingError, StandardError, NameError, SyntaxError => err
             error report_error("#{p.botmodule_class} #{p.name} help() failed:", err)
           end
         end
