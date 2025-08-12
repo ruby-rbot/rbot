@@ -12,7 +12,7 @@
 require 'tzinfo'
 
 class TimePlugin < Plugin
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "set"
       _("usage: time set <Continent>/<City> -- setting your location allows the bot to calibrate time replies into your time zone, and other people to figure out what time it is for you")

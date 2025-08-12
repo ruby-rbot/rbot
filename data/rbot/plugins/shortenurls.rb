@@ -39,7 +39,7 @@ class ShortenURLs < Plugin
   end
 
   # return a help string when the bot is asked for help on this plugin
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     return "shorten urls. syntax: <service> <your long url> => creates a shortened url using the required service (choose between #{@services.join(', ')}). Example: #{@bot.nick}, tinyurl http://some.long.url/wow-this-is/really-long.html"
   end
 

@@ -107,7 +107,7 @@ class WebHookPlugin < Plugin
   #
   # Host filters should check that the request+payload is compatible with the format they expect,
   # and that the detected repo name matches the provided one. If either condition is not satisfied,
-  # they should return nil. Otherwise, they should agument the input hash with
+  # they should return nil. Otherwise, they should augment the input hash with
   # approrpiate keys extracting the relevant information (as indicated below).
   #
   # The default host and out filters produce and expect the following keys in the DataStream:
@@ -328,7 +328,7 @@ class WebHookPlugin < Plugin
     @registry[:repos] = Hash.new.merge @repos
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "watch"
       ["webhook watch #{Bold}repository#{Bold} #{Bold}filter#{Bold} [in #{Bold}\#channel#{Bold}]: announce webhook triggers matching the given repository, using the given output filter.",

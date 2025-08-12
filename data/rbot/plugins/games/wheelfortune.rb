@@ -234,7 +234,7 @@ class WheelOfFortune < Plugin
     @games = Hash.new
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when 'play'
       _("wof [<channel>] play [<name>] for <single> to <max> => starts a wheel-of-fortune game on channel <channel> (default: current channel), named <name> (default: wheelfortune.game_name config setting, or the last game name used by the user), with <single> points per round. the game is won when a player reachers <max> points. vowels cost <single>*<single>/<max> points. The user that starts the game is the game manager and must set up the clues and answers in private. All the other users have to learn the answer to each clue by saying single consonants or the whole sentence. Every time a consonant is guessed, the bot will reveal the partial answer, showing the missing letters as * (asterisks).")
@@ -480,7 +480,7 @@ class WheelOfFortune < Plugin
     when :wrong
       return
     when Numeric, :missing
-      # TODO may alter score depening on how many letters were guessed
+      # TODO may alter score depenping on how many letters were guessed
       # TODO what happens when the last hint reveals the whole answer?
       announce(m)
     when :gotit

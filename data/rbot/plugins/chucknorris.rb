@@ -6,7 +6,6 @@ MIN_VOTES = 25
 
 # the plugin
 class ChuckNorrisPlugin < Plugin
-
   # Loadez les factes
   def initialize
     if path = find_facts_file('chucknorris.yml.gz')
@@ -19,7 +18,7 @@ class ChuckNorrisPlugin < Plugin
 
     debug "+ [chucknorris] Loading #{path}..."
 
-    @@facts = YAML.load(fyml).map{|fact,(score,votes)| votes >= MIN_VOTES ? [score,fact] : nil}.compact
+    @@facts = YAML.load(fyml).map { |fact, (score, votes)| votes >= MIN_VOTES ? [score, fact] : nil }.compact
     debug "+ [chucknorris] #{@@facts.length} Chuck Norris facts loaded..."
     debug "  Random fact: #{@@facts[rand(@@facts.size)].inspect}"
 
@@ -27,12 +26,12 @@ class ChuckNorrisPlugin < Plugin
   end
 
   def name
-    "chucknorris"
+    'chucknorris'
   end
 
   # Just a little helper for the initialize method...
   def find_facts_file(name)
-    full_path = File.join Config::datadir, "plugins", name
+    full_path = File.join Config::datadir, 'plugins', name
     found_files = Dir[full_path]
     if found_files.empty?
       nil
@@ -42,8 +41,8 @@ class ChuckNorrisPlugin < Plugin
   end
 
   # HELP!
-  def help(plugin, topic="chuck")
-    "chuck|norris|chucknorris [min_rating] => show a random Chuck Norris fact (optional minimum rating from 1-10, default=6.0)."
+  def help(plugin, topic = 'chuck')
+    'chuck|norris|chucknorris [min_rating] => show a random Chuck Norris fact (optional minimum rating from 1-10, default=6.0).'
     #\"fact [person]\" shows a fact about someone in the channel.
   end
 
@@ -52,7 +51,7 @@ class ChuckNorrisPlugin < Plugin
     min = params[:minrating].to_f
     debug "+ Getting Chuck Norris fact (rating > #{min})..."
 
-    viable_facts = @@facts.select {|rating, fact| rating >= min}
+    viable_facts = @@facts.select { |rating, fact| rating >= min }
     if viable_facts.empty?
       debug "  - no facts found with rating >= #{min}"
       m.reply "Are you nuts?!? There are no facts better than #{min}!!!"
@@ -62,13 +61,11 @@ class ChuckNorrisPlugin < Plugin
     rating, fact = viable_facts[rand(viable_facts.length)]
     m.reply "#{fact} [score=#{rating}]"
   end
-
 end
 
 plugin = ChuckNorrisPlugin.new
 
 # plugin.map 'fact :minrating', :action => 'fact', :defaults => {:minrating=>MIN_RATING}
-plugin.map 'chucknorris :minrating', :action => 'fact', :defaults => {:minrating=>MIN_RATING}
-plugin.map 'chuck :minrating', :action => 'fact', :defaults => {:minrating=>MIN_RATING}
-plugin.map 'norris :minrating', :action => 'fact', :defaults => {:minrating=>MIN_RATING}
-
+plugin.map 'chucknorris :minrating', :action => 'fact', :defaults => { :minrating => MIN_RATING }
+plugin.map 'chuck :minrating', :action => 'fact', :defaults => { :minrating => MIN_RATING }
+plugin.map 'norris :minrating', :action => 'fact', :defaults => { :minrating => MIN_RATING }

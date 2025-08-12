@@ -233,7 +233,7 @@ class ConfigModule < CoreBotModule
     m.reply help(params[:topic])
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when "config"
       case topic

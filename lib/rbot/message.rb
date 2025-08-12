@@ -243,7 +243,7 @@ module Irc
     end
 
     # returns true if the messaged was addressed to the bot via the address
-    # prefix. This can be used to tell appart "!do this" from "botname, do this"
+    # prefix. This can be used to tell apart "!do this" from "botname, do this"
     def prefixed?
       return @prefixed
     end
@@ -379,7 +379,7 @@ module Irc
 
       # free splitting for plugins
       @params = @message.dup
-      # Created messges (such as by fake_message) can contain multiple lines
+      # Created messages (such as by fake_message) can contain multiple lines
       if @params.gsub!(/\A\s*(\S+)[\s$]*/m, "")
         @plugin = $1.downcase
         @params = nil unless @params.length > 0

@@ -73,7 +73,7 @@ class Shiritori
   # dictionary:: a Dictionary object
   # overlap_lengths:: a Range for allowed lengths to overlap when continuing words
   # check_continuable:: whether all words are checked whether they're continuable,
-  #                     before being commited
+  #                     before being committed
   # allow_reuse:: whether words are allowed to be used again
   def initialize(dictionary, overlap_lengths, check_continuable, allow_reuse)
     @dictionary = dictionary
@@ -327,7 +327,7 @@ end
 
 # shiritori plugin for rbot
 class ShiritoriPlugin < Plugin
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     _("A game in which each player must continue the previous player's word, by using its last one or few characters/letters of the word to start a new word. 'shiritori <ruleset>' => Play shiritori with a set of rules. Available rulesets: %{rulesets}. 'shiritori stop' => Stop the current shiritori game.") %
       {:rulesets => @rulesets.keys.join(', ')}
   end

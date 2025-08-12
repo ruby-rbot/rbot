@@ -7,7 +7,7 @@ require 'rexml/document'
 
 class SlashdotPlugin < Plugin
   include REXML
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "slashdot search <string> [<max>=4] => search slashdot for <string>, slashdot [<max>=4] => return up to <max> slashdot headlines (use negative max to return that many headlines, but all on one line.)"
   end
 

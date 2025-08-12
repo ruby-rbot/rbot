@@ -261,7 +261,7 @@ class FactoidsPlugin < Plugin
     @learn_patterns.replace(learn_patterns_to_rx)
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when 'learn'
       _("learn that <factoid> => learn a factoid")

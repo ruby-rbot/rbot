@@ -4,24 +4,29 @@
 # :title: Autorejoin
 
 class AutoRejoinPlugin < Plugin
-  Config.register Config::BooleanValue.new('rejoin.insult',
+  Config.register Config::BooleanValue.new(
+    'rejoin.insult',
     :default => true,
-    :desc => "Determines if the bot will insult whoever kicked it, after rejoin")
-  Config.register Config::BooleanValue.new('rejoin.kick',
+    :desc => 'Determines if the bot will insult whoever kicked it, after rejoin'
+  )
+  Config.register Config::BooleanValue.new(
+    'rejoin.kick',
     :default => false,
-    :desc => "Determines if the bot will kick whoever kicked it, after rejoin")
-  Config.register Config::ArrayValue.new('rejoin.no_kick_list',
+    :desc => 'Determines if the bot will kick whoever kicked it, after rejoin'
+  )
+  Config.register Config::ArrayValue.new(
+    'rejoin.no_kick_list',
     :default => ["owner"],
-    :desc => "List of botusers that can kick the bot without being kicked")
-
+    :desc => 'List of botusers that can kick the bot without being kicked'
+  )
 
   def initialize
     super
     @should_kick = Hash.new
   end
 
-  def help(plugin, topic="")
-    "performs an automatic rejoin if the bot is kicked from a channel"
+  def help(plugin, topic = '')
+    'performs an automatic rejoin if the bot is kicked from a channel'
   end
 
   def kick(m)
@@ -32,14 +37,14 @@ class AutoRejoinPlugin < Plugin
         @should_kick[m.channel.downcase] = m.sourcenick
       end
       r = rand(10)
-      if r > 0
-	@bot.timer.add_once(r) {
-	  @bot.join m.channel, password
-	  @bot.say(m.channel, @bot.lang.get("insult") % m.sourcenick) if @bot.config['rejoin.insult']
-	}
+      if r.positive?
+        @bot.timer.add_once(r) do
+          @bot.join m.channel, password
+          @bot.say(m.channel, @bot.lang.get('insult') % m.sourcenick) if @bot.config['rejoin.insult']
+        end
       else
-	@bot.join m.channel, password
-	@bot.say(m.channel, @bot.lang.get("insult") % m.sourcenick) if @bot.config['rejoin.insult']
+        @bot.join m.channel, password
+        @bot.say(m.channel, @bot.lang.get('insult') % m.sourcenick) if @bot.config['rejoin.insult']
       end
     end
   end
@@ -57,9 +62,8 @@ class AutoRejoinPlugin < Plugin
     to_kick = @should_kick.delete(m.target.downcase)
     return unless to_kick
     # kick the evil user that kicked us
-    @bot.kick m.target, to_kick, _("for kicking me out earlier")
+    @bot.kick m.target, to_kick, _('for kicking me out earlier')
   end
-
 end
 
 plugin = AutoRejoinPlugin.new

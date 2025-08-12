@@ -301,7 +301,7 @@ class ::String
     # such as &nbsp;
     txt = Utils.decode_html_entities(txt)
 
-    # Keep unbreakable spaces or conver them to plain spaces?
+    # Keep unbreakable spaces or convert them to plain spaces?
     case val = opts[:nbsp]
     when :space, ' '
       txt.gsub!([160].pack('U'), ' ')
@@ -509,8 +509,8 @@ module ::Irc
         # initialize these entries from an existing message, you can use :from
         #
         # Additionally, if :from is given, the reply method of created message
-        # is overriden to reply to :from instead. The #in_thread attribute
-        # for created mesage is also copied from :from
+        # is overridden to reply to :from instead. The #in_thread attribute
+        # for created message is also copied from :from
         #
         # If you don't specify a :from you should specify a :source.
         #

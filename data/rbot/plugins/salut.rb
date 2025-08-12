@@ -56,7 +56,7 @@ class SalutPlugin < Plugin
     @salutations = @registry[:salutations]
 
     # migrate existing data files
-    if not @salutations and Dir.exists? datafile
+    if not @salutations and Dir.exist? datafile
       log "migrate existing salutations from #{datafile}"
 
       @salutations = load_static_files(datafile)

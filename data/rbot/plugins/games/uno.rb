@@ -874,7 +874,7 @@ class UnoPlugin < Plugin
     @games = {}
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when 'commands'
       [

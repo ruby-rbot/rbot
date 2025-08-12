@@ -93,7 +93,7 @@ TITLE = [
 ]
 
 class TheyFightCrime < Plugin
-    def help(plugin, topic="")
+    def help(plugin, topic = '')
         "movieplot => generate a random movie scenario. movietitle => generate a random movie title."
     end
 

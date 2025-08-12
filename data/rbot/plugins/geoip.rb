@@ -113,7 +113,7 @@ class GeoIpPlugin < Plugin
       :default => "",
       :desc => "API key for the IPinfoDB geolocation service")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "geoip [<user|hostname|ip>] => returns the geographic location of whichever has been given -- note: user can be anyone on the network"
   end
 

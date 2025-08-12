@@ -51,7 +51,7 @@ class StatsPlugin < Plugin
 	end
 	#}}}
 	#{{{
-	def help(plugin, topic="")
+	def help(plugin, topic = '')
 		"Stats:  The stats plugin tracks various tokens from users in the channel.  The tokens are only tracked if it is the only thing on a line.\nUsage:  stats <token>  --  lists the stats for <token>\n        [un]track <token>  --  Adds or deletes <token> from the list of tokens\n        listtokens  --  lists the tokens that are currently being tracked"
 	end
 	#}}}

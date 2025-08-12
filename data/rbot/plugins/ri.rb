@@ -13,15 +13,16 @@
 #
 
 class RiPlugin < Plugin
-
   RI_COMMAND = %w{ri -f ansi -T}
 
-  Config.register Config::IntegerValue.new('ri.max_length',
+  Config.register Config::IntegerValue.new(
+    'ri.max_length',
     :default => 512,
-    :desc => "Maximum length of ri entry (in bytes) which is ok to be sent to channels or other users")
+    :desc => 'Maximum length of ri entry (in bytes) which is ok to be sent to channels or other users'
+  )
 
-  def help(plugin, topic="")
-    "ri <something> => returns ruby documentation for <something>; ri [tell] <whom> [about] <something> => sends the documentation entry about <something> to <whom> using /msg"
+  def help(plugin, topic = '')
+    'ri <something> => returns ruby documentation for <something>; ri [tell] <whom> [about] <something> => sends the documentation entry about <something> to <whom> using /msg'
   end
 
   def ri(m, params)
@@ -39,19 +40,17 @@ class RiPlugin < Plugin
     end
     args = RI_COMMAND.dup
     if a = params[:something]
-      if a == '-c'
-        args.push(a)
-      else
+      unless a == '-c'
         args.push('--')
-        args.push(a)
       end
+      args.push(a)
     end
     begin
       ret = Utils.safe_exec(*args)
     rescue
-      return m.reply("failed to execute ri")
+      return m.reply('failed to execute ri')
     end
-    ret = ret.gsub(/\t/, "  ").split(/\n/).join(" ").gsub(/\s\s+/, '  ')
+    ret = ret.gsub(/\t/, '  ').split(/\n/).join(' ').gsub(/\s\s+/, '  ')
 
     if ret.length > @bot.config['ri.max_length']
       if !m.private? && tgt.to_s != m.sourcenick
@@ -64,11 +63,10 @@ class RiPlugin < Plugin
     else
       m.reply(ret)
     end
-    return
   end
 end
 
 plugin = RiPlugin.new
-plugin.map 'ri :something', :requirements => {:something => /^((-c)|(\w\S+))$/}
+plugin.map 'ri :something', :requirements => { :something => /^((-c)|(\w\S+))$/ }
 plugin.map 'ri [tell] :who [about] :something',
-  :requirements => {:something => /^((-c)|(\w\S+))$/}
+  :requirements => { :something => /^((-c)|(\w\S+))$/ }

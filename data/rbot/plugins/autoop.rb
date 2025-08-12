@@ -9,7 +9,7 @@ class AutoOP < Plugin
     :desc => "Hostmask format used when seeding channels. Recognized tokens: " +
              "nick, user, host")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     return "perform autoop based on hostmask - usage:" +
            "add <hostmask> [channel channel ...], rm <hostmask> [channel], " +
              "If you don't specify which channels, all channels are assumed, " +

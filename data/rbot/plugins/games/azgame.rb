@@ -586,7 +586,7 @@ class AzGamePlugin < Plugin
     return word
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when 'manage'
       return _("az [lang] word [count|list|add|delete] => manage the az wordlist for language lang (defaults to current bot language)")

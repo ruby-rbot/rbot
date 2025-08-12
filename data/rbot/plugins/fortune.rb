@@ -11,7 +11,7 @@ class FortunePlugin < Plugin
     :default => ['-n', '350', '-s'],
     :desc => "Options to be passed on to fortune")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "fortune [<category>] => get a (short) fortune, optionally specifying fortune category || fortune categories => show categories"
   end
 

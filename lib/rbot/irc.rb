@@ -277,8 +277,8 @@ class String
     begin
       Irc::Casemap.get(self)
     rescue
-      # raise TypeError, "Unkown Irc::Casemap #{self.inspect}"
-      error "Unkown Irc::Casemap #{self.inspect} requested, defaulting to rfc1459"
+      # raise TypeError, "Unknown Irc::Casemap #{self.inspect}"
+      error "Unknown Irc::Casemap #{self.inspect} requested, defaulting to rfc1459"
       Irc::Casemap.get('rfc1459')
     end
   end
@@ -575,8 +575,8 @@ class Regexp
     # GEN_HOST_EXT = /#{PDPC_HOST}|#{GEN_HOST}\.??/
 
     # Sadly, different networks have different, RFC-breaking ways of cloaking
-    # the actualy host address: see above for an example to handle FreeNode.
-    # Another example would be Azzurra, wich also inserts a "=" in the
+    # the actually host address: see above for an example to handle FreeNode.
+    # Another example would be Azzurra, which also inserts a "=" in the
     # cloacked host. So let's just not care about this and go with the simplest
     # thing:
     GEN_HOST_EXT = /\S+/

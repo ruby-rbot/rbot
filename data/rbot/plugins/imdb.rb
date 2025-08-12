@@ -420,7 +420,7 @@ class ImdbPlugin < Plugin
     :default => false,
     :desc => "Whether searching movies by person/year should also return TV series")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when "movies"
       "movies by <who> in <years> [as <role>] => display the movies in the <years> where which <who> was <role>; <role> can be one of actor, actress, director or anything: if it's omitted, the role is defined by the prefix: \"movies by ...\" implies director, \"movies with ...\" implies actor or actress; the years can be specified as \"in the 60s\" or as \"in 1953\""
@@ -439,7 +439,7 @@ class ImdbPlugin < Plugin
     loc = Utils.check_location(s, TITLE_URL)
     if loc
       sr = loc.first.match(TITLE_URL)[1]
-      extra = $2 # nothign for the time being, could be fullcredits or whatever
+      extra = $2 # nothing for the time being, could be fullcredits or whatever
       res = i.info_title(sr, :nourl => true, :characters => (extra == 'fullcredits'))
       debug res
       if res

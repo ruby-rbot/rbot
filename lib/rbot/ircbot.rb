@@ -4,20 +4,11 @@
 #
 # :title: rbot core
 
-require 'thread'
-
 require 'etc'
 require 'date'
 require 'fileutils'
 
 require 'pp'
-
-unless Kernel.respond_to? :pretty_inspect
-  def pretty_inspect
-    PP.pp(self, '')
-  end
-  public :pretty_inspect
-end
 
 class Exception
   def pretty_print(q)
@@ -53,12 +44,14 @@ require 'rbot/language'
 require 'rbot/httputil'
 
 module Irc
+Irc::Error = Class.new(RuntimeError)
+Irc::PingError = Class.new(Irc::Error)
 
 # Main bot class, which manages the various components, receives messages,
 # handles them or passes them to plugins, and contains core functionality.
 class Bot
-  COPYRIGHT_NOTICE = "(c) Giuseppe Bilotta and the rbot development team"
-  SOURCE_URL = "https://ruby-rbot.org"
+  COPYRIGHT_NOTICE = '(c) Giuseppe Bilotta and the rbot development team'
+  SOURCE_URL = 'https://ruby-rbot.org'
   # the bot's Auth data
   attr_reader :auth
 
@@ -194,7 +187,7 @@ class Bot
       :wizard => true)
     Config.register Config::StringValue.new('server.ssl_ca_path',
       :default => default_ssl_ca_path, :requires_restart => true,
-      :desc => "Alternativly a directory that includes CA PEM files used to verify the SSL connection.",
+      :desc => "Alternatively a directory that includes CA PEM files used to verify the SSL connection.",
       :wizard => true)
     Config.register Config::StringValue.new('server.password',
       :default => false, :requires_restart => true,
@@ -793,10 +786,10 @@ class Bot
         :join_with => ' ',          # by default, use a single space
         :max_lines => 0,          # maximum number of lines to send with a single command
         :overlong => :split,        # or :truncate
-        # TODO an array of splitpoints would be preferrable for this option:
+        # TODO an array of splitpoints would be preferable for this option:
         :split_at => /\s+/,         # by default, split overlong lines at whitespace
         :purge_split => true,       # should the split string be removed?
-        :truncate_text => "#{Reverse}...#{Reverse}"  # text to be appened when truncating
+        :truncate_text => "#{Reverse}...#{Reverse}"  # text to be appended when truncating
       }
     end
     @default_send_options.update opts unless opts.empty?
@@ -946,7 +939,7 @@ class Bot
 
           # Wait for messages and process them as they arrive. If nothing is
           # received, we call the ping_server() method that will PING the
-          # server if appropriate, or raise a TimeoutError if no PONG has been
+          # server if appropriate, or raise a Irc::PingError if no PONG has been
           # received in the user-chosen timeout since the last PING sent.
           if @socket.select(1)
             break unless reply = @socket.gets
@@ -960,12 +953,12 @@ class Bot
         end
 
       # I despair of this. Some of my users get "connection reset by peer"
-      # exceptions that ARENT SocketError's. How am I supposed to handle
+      # exceptions that AREN'T SocketError's. How am I supposed to handle
       # that?
       rescue SystemExit
         @keep_looping = false
         break
-      rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, TimeoutError, SocketError => e
+      rescue Errno::ETIMEDOUT, Errno::ECONNABORTED, Irc::PingError, SocketError => e
         error "network exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
         too_fast += 10 if valid_recv
@@ -976,19 +969,19 @@ class Bot
         if e.message.empty?
           oldtf = too_fast
           too_fast = [too_fast, 300].max
-          too_fast*= 2
+          too_fast *= 2
           log "Empty message from server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
-        quit_msg = "Unparseable Server Message: #{e.message.inspect}"
+        quit_msg = "Unparsable Server Message: #{e.message.inspect}"
         retry
       rescue ServerError => e
-        quit_msg = "server ERROR: " + e.message
+        quit_msg = "server ERROR: #{e.message}"
         debug quit_msg
-        idx = e.message.index("connect too fast")
+        idx = e.message.index('connect too fast')
         debug "'connect too fast' @ #{idx}"
         if idx
           oldtf = too_fast
-          too_fast += (idx+1)*2
+          too_fast += (idx + 1) * 2
           log "Reconnecting too fast, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         idx = e.message.index(/a(uto)kill/i)
@@ -998,16 +991,13 @@ class Bot
           # if it's permanent or temporary, we just set a rather high
           # reconnection timeout
           oldtf = too_fast
-          too_fast += (idx+1)*5
+          too_fast += (idx + 1) * 5
           log "Killed by server, extra delay multiplier #{oldtf} -> #{too_fast}"
         end
         retry
       rescue Exception => e
         error "non-net exception: #{e.pretty_inspect}"
         quit_msg = e.to_s
-      rescue => e
-        fatal "unexpected exception: #{e.pretty_inspect}"
-        exit 2
       end
     end
   end
@@ -1019,7 +1009,7 @@ class Bot
   # Type can be PRIVMSG, NOTICE, etc, but those you should really use the
   # relevant say() or notice() methods. This one should be used for IRCd
   # extensions you want to use in modules.
-  def sendmsg(original_type, original_where, original_message, options={})
+  def sendmsg(original_type, original_where, original_message, options = {})
 
     # filter message with sendmsg filters
     ds = DataStream.new original_message.to_s.dup,
@@ -1073,11 +1063,11 @@ class Bot
     when :join
       messages << [multi_line.gsub("\n", opts[:join_with])]
     when :split
-      multi_line.each_line { |line|
+      multi_line.each_line do |line|
         line.chomp!
         next unless(line.size > 0)
         messages << line
-      }
+      end
     else
       raise "Unknown :newlines option #{opts[:newlines]} while sending #{original_message.inspect}"
     end
@@ -1149,7 +1139,7 @@ class Bot
     }
   end
 
-  # queue an arbitraty message for the server
+  # queue an arbitrary message for the server
   def sendq(message="", chan=nil, ring=0)
     # temporary
     @socket.queue(message, chan, ring)
@@ -1398,7 +1388,7 @@ class Bot
         if diff > act_timeout
           debug "no PONG from server in #{diff} seconds, reconnecting"
           # the actual reconnect is handled in the main loop:
-          raise TimeoutError, "no PONG from server in #{diff} seconds"
+          raise Irc::PingError, "no PONG from server in #{diff} seconds"
         end
       end
     end

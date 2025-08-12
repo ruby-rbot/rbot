@@ -13,7 +13,7 @@ class FiltersModule < CoreBotModule
     @bot.register_filter(:htmlinfo) { |s| Utils.get_html_info(@bot, s.to_s, s) }
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "filters list [<group>] => list filters (in group <group>) | filters search <pat> => list filters matching regexp <pat>"
   end
 

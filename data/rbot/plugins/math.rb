@@ -25,7 +25,7 @@ class MathPlugin < Plugin
   def name
     "math"
   end
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "math <expression>, evaluate mathematical expression"
   end
   def privmsg(m)

@@ -9,19 +9,21 @@
 # License:: MIT license
 
 class NotePlugin < Plugin
-
   Note = Struct.new('Note', :time, :from, :private, :text)
 
-  Config.register Config::BooleanValue.new 'note.private_message',
+  Config.register Config::BooleanValue.new(
+    'note.private_message',
     :default => false,
     :desc => 'Send all notes in private messages instead of channel messages.'
+  )
 
   def initialize
     super
-    return if @registry.length < 1
+    return if @registry.empty?
+
     debug 'Checking registry for old-formatted notes...'
     n = 0
-    @registry.keys.each do |key|
+    @registry.each_key do |key|
       unless key == key.downcase
         @registry[key.downcase] = @registry[key] + (@registry[key.downcase] || [])
         @registry.delete key
@@ -31,7 +33,7 @@ class NotePlugin < Plugin
     debug "#{n} entries converted and merged."
   end
 
-  def help(plugin, topic='')
+  def help(plugin, topic = '')
     'note <nick> <string> => stores a note (<string>) for <nick>'
   end
 
@@ -40,7 +42,8 @@ class NotePlugin < Plugin
       nick = m.sourcenick.downcase
       # Keys are case insensitive to avoid storing a message
       # for <person> instead of <Person> or visa-versa.
-      return unless @registry.has_key? nick
+      return unless @registry.key? nick
+
       pub = []
       priv = []
       @registry[nick].each do |n|
@@ -56,7 +59,7 @@ class NotePlugin < Plugin
           pub.join(' ')
       end
       unless priv.empty?
-        @bot.say m.sourcenick, 'you have notes! ' + priv.join(' ')
+        @bot.say m.sourcenick, "you have notes! #{priv.join(' ')}"
       end
       @registry.delete nick
     rescue Exception => e
@@ -65,17 +68,15 @@ class NotePlugin < Plugin
   end
 
   def note(m, params)
-    begin
-      nick = params[:nick].downcase
-      q = @registry[nick] || Array.new
-      s = params[:string].to_s.strip
-      raise 'cowardly discarding the empty note' if s.empty?
-      q.push Note.new(Time.now, m.sourcenick, m.private?, s)
-      @registry[nick] = q
-      m.okay
-    rescue Exception => e
-      m.reply "error: #{e.message}"
-    end
+    nick = params[:nick].downcase
+    q = @registry[nick] || Array.new
+    s = params[:string].to_s.strip
+    raise 'cowardly discarding the empty note' if s.empty?
+    q.push Note.new(Time.now, m.sourcenick, m.private?, s)
+    @registry[nick] = q
+    m.okay
+  rescue Exception => e
+    m.reply "error: #{e.message}"
   end
 end
 

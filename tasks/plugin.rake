@@ -9,7 +9,7 @@ Example: rake plugin[Greet]
   class_name  = "#{plugin_name.capitalize}Plugin"
   plugin_template = <<-eot
 class #{class_name} < Plugin
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     topics = %w{hello}
 
     case topic

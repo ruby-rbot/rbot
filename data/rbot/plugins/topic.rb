@@ -15,7 +15,7 @@ class TopicPlugin < Plugin
     @separator = "|" # default separator
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case plugin
     when "topic"
       case topic

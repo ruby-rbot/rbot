@@ -48,7 +48,7 @@ class NickServPlugin < Plugin
     :default => 30, :validate => Proc.new { |v| v > 0 }, :requires_restart => false,
     :desc => _("Seconds to wait after sending a message to nickserv, e.g. after ghosting"))
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when ""
       return _("nickserv plugin: handles nickserv protected IRC nicks. topics: password, register, identify, listnicks")

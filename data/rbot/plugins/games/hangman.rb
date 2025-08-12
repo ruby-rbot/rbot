@@ -235,7 +235,7 @@ class HangmanPlugin < Plugin
     @settings = {}
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     case topic
     when "play"
       return [_("hangman play on <channel> with word <word> => use in private chat with the bot to start a game with custom word\n"),

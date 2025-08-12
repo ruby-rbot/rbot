@@ -103,7 +103,7 @@ class TwitterPlugin < Plugin
     m.reply [failed_action, "no Twitter Consumer Key/Secret is defined"].join(' because ')
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     return "twitter status [nick] => show nick's (or your) status, use 'twitter [home/mentions/retweets] status' to show your timeline | twitter update [status] => updates your status on twitter | twitter authorize => Generates an authorization URL which will give you a PIN to authorize the bot to use your twitter account. | twitter pin [pin] => Finishes bot authorization using the PIN provided by the URL from twitter authorize. | twitter deauthorize => Makes the bot forget your Twitter account. | twitter actions [on|off] => enable/disable twitting of actions (/me does ...)"
   end
 

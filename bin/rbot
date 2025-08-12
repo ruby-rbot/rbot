@@ -52,35 +52,35 @@ $opts = Hash.new
 orig_opts = ARGV.dup
 
 opts = GetoptLong.new(
-  ["--background", "-b", GetoptLong::NO_ARGUMENT],
-  ["--debug", "-d", GetoptLong::NO_ARGUMENT],
-  ["--help",  "-h", GetoptLong::NO_ARGUMENT],
-  ["--loglevel",  "-l", GetoptLong::REQUIRED_ARGUMENT],
-  ["--trace",  "-t", GetoptLong::REQUIRED_ARGUMENT],
-  ["--pidfile", "-p", GetoptLong::REQUIRED_ARGUMENT],
-  ["--version", "-v", GetoptLong::NO_ARGUMENT]
+  ['--background', '-b', GetoptLong::NO_ARGUMENT],
+  ['--debug', '-d', GetoptLong::NO_ARGUMENT],
+  ['--help', '-h', GetoptLong::NO_ARGUMENT],
+  ['--loglevel', '-l', GetoptLong::REQUIRED_ARGUMENT],
+  ['--trace', '-t', GetoptLong::REQUIRED_ARGUMENT],
+  ['--pidfile', '-p', GetoptLong::REQUIRED_ARGUMENT],
+  ['--version', '-v', GetoptLong::NO_ARGUMENT]
 )
 
 $daemonize = false
 
-opts.each {|opt, arg|
-  $daemonize = true if(opt == "--background")
-  $opts[opt.sub(/^-+/, "")] = arg
-}
+opts.each do |opt, arg|
+  $daemonize = true if opt == '--background'
+  $opts[opt.sub(/^-+/, '')] = arg
+end
 
-if ($opts["trace"])
+if $opts['trace']
   set_trace_func proc { |event, file, line, id, binding, classname|
-    if classname.to_s == $opts["trace"]
+    if classname.to_s == $opts['trace']
       printf "TRACE: %8s %s:%-2d %10s %8s\n", event, File.basename(file), line, id, classname
     end
   }
 end
 
-defaultlib = File.expand_path(File.dirname($0) + '/../lib')
+defaultlib = File.expand_path("#{File.dirname($PROGRAM_NAME)}/../lib")
 
 if File.directory? "#{defaultlib}/rbot"
-  unless $:.include? defaultlib
-    $:.unshift defaultlib
+  unless $LOAD_PATH.include? defaultlib
+    $LOAD_PATH.unshift defaultlib
   end
 end
 
@@ -94,20 +94,20 @@ rescue LoadError => e
   exit 2
 end
 
-if ($opts["version"])
+if $opts['version']
   puts "rbot #{$version}"
   exit 0
 end
 
-if ($opts["help"])
-  puts "usage: rbot [options] [config directory]"
-  puts "  -h, --help         this message"
-  puts "  -v, --version      version information"
-  puts "  -d, --debug        enable debug messages"
-  puts "  -l, --loglevel     sets the log level verbosity"
-  puts "  -b, --background   background (daemonize) the bot"
-  puts "  -p, --pidfile      write the bot pid to file"
-  puts "config directory defaults to ~/.rbot"
+if $opts['help']
+  puts 'usage: rbot [options] [config directory]'
+  puts '  -h, --help         this message'
+  puts '  -v, --version      version information'
+  puts '  -d, --debug        enable debug messages'
+  puts '  -l, --loglevel     sets the log level verbosity'
+  puts '  -b, --background   background (daemonize) the bot'
+  puts '  -p, --pidfile      write the bot pid to file'
+  puts 'config directory defaults to ~/.rbot'
   exit 0
 end
 
@@ -118,7 +118,7 @@ if loglevel
   Irc::Bot::LoggerManager.instance.set_level(loglevel)
 end
 
-if(bot = Irc::Bot.new(ARGV.shift, :argv => orig_opts))
+if (bot = Irc::Bot.new(ARGV.shift, argv: orig_opts))
   # just run the bot
   bot.mainloop
 end

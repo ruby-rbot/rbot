@@ -7,7 +7,7 @@
 # Author:: Tom Gilbert <tom@linuxbrit.co.uk>
 # Author:: Giuseppe "Oblomov" Bilotta <giuseppe.bilotta@gmail.com>
 #
-# TODO some of these Utils should be rewritten as extensions to the approriate
+# TODO some of these Utils should be rewritten as extensions to the appropriate
 # standard Ruby classes and accordingly be moved to extends.rb
 
 require 'tempfile'
@@ -625,7 +625,7 @@ module ::Irc
     # nil is returned.
     #
     # The input DataStream should have the downloaded HTML as primary key
-    # (:text) and possibly a :headers key holding the resonse headers.
+    # (:text) and possibly a :headers key holding the response headers.
     #
     def Utils.try_htmlinfo_filters(bot, ds)
       filters = bot.filter_names(:htmlinfo)

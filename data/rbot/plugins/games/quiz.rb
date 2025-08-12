@@ -155,7 +155,7 @@ end
 class QuizPlugin < Plugin
   Config.register Config::BooleanValue.new('quiz.dotted_nicks',
     :default => true,
-    :desc => "When true, nicks in the top X scores will be camouflaged to prevent IRC hilighting")
+    :desc => "When true, nicks in the top X scores will be camouflaged to prevent IRC highlighting")
 
   Config.register Config::ArrayValue.new('quiz.sources',
     :default => ['quiz.rbot'],
@@ -205,7 +205,7 @@ class QuizPlugin < Plugin
     # Read the winning messages file
     @win_messages = Array.new
     winfile = datafile 'win_messages'
-    if File.exists? winfile
+    if File.exist? winfile
       IO.foreach(winfile) { |line| @win_messages << line.chomp }
     else
       warning( "win_messages file not found!" )
@@ -314,7 +314,7 @@ class QuizPlugin < Plugin
   end
 
 
-  def help( plugin, topic="" )
+  def help( plugin, topic = '' )
     if topic == "admin"
       _("Quiz game aministration commands (requires authentication): ") + [
         _("'quiz autoask <on/off>' => enable/disable autoask mode"),

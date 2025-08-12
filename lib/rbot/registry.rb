@@ -30,7 +30,7 @@
 #   blah[:foo] = "flump"
 #   @registry[:blah] = blah
 #
-# If you don't need to store objects, and strictly want a persistant hash of
+# If you don't need to store objects, and strictly want a persistent hash of
 # strings, you can override the store/restore methods to suit your needs, for
 # example (in your plugin):
 #   def initialize
@@ -92,8 +92,8 @@ class Registry
   def migrate_registry_folder(path)
     old_name = File.join(path, 'registry')
     new_name = File.join(path, 'registry_tc')
-    if @format == 'tc' and File.exists?(old_name) and
-        not File.exists?(new_name) and
+    if @format == 'tc' and File.exist?(old_name) and
+        not File.exist?(new_name) and
         not Dir.glob(File.join(old_name, '*.tdb')).empty?
       File.rename(old_name, new_name)
     end
@@ -138,7 +138,7 @@ class Registry
 
     # Will return true if the database file exists.
     def dbexists?
-      File.exists? @filename
+      File.exist? @filename
     end
 
     # convert value to string form for storing in the registry
@@ -177,7 +177,7 @@ class Registry
       end
     end
 
-    # Returned instead of nil if key wasnt found.
+    # Returned instead of nil if key wasn't found.
     def set_default (default)
       @default = default
     end

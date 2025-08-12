@@ -3,6 +3,8 @@
 #
 # :title: Url plugin
 
+require 'socket'
+
 define_structure :Url, :channel, :nick, :time, :url, :info
 
 class UrlPlugin < Plugin
@@ -63,7 +65,7 @@ class UrlPlugin < Plugin
     debug "no info hosts regexp set to #{@no_info_hosts}"
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "url info <url> => display link info for <url> (set url.display_link_info > 0 if you want the bot to do it automatically when someone writes an url), urls [<max>=4] => list <max> last urls mentioned in current channel, urls search [<max>=4] <regexp> => search for matching urls. In a private message, you must specify the channel to query, eg. urls <channel> [max], urls search <channel> [max] <regexp>"
   end
 
@@ -78,8 +80,7 @@ class UrlPlugin < Plugin
 
     # also check the ip, the canonical name and the aliases
     begin
-      checks = TCPSocket.gethostbyname(url.host)
-      checks.delete_at(-2)
+      checks = Addrinfo.getaddrinfo(url.host, nil).map { |addr| addr.ip_address }
     rescue => e
       return "Unable to retrieve info for #{url.host}: #{e.message}"
     end
@@ -254,8 +255,7 @@ class UrlPlugin < Plugin
   def message(m)
     return if m.address?
 
-    escaped = URI.escape(m.message, OUR_UNSAFE)
-    urls = URI.extract(escaped, ['http', 'https'])
+    urls = URI.extract(m.message, ['http', 'https'])
     return if urls.empty?
     Thread.new { handle_urls(m, :urls => urls) }
   end

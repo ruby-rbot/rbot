@@ -99,7 +99,7 @@ class FigletPlugin < Plugin
     test_toilet
   end
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     "figlet|toilet <message> => print using figlet or toilet"
   end
 

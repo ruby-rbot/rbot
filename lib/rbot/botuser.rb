@@ -101,7 +101,7 @@ class Bot
         debug "Created command #{@command.inspect} with path #{@path.pretty_inspect}"
       end
 
-      # Returs self
+      # Returns self
       def to_irc_auth_command
         self
       end
@@ -116,7 +116,7 @@ end
 
 class String
 
-  # Returns an Irc::Bot::Auth::Comand from the receiver
+  # Returns an Irc::Bot::Auth::Command from the receiver
   def to_irc_auth_command
     Irc::Bot::Auth::Command.new(self)
   end
@@ -126,7 +126,7 @@ end
 
 class Symbol
 
-  # Returns an Irc::Bot::Auth::Comand from the receiver
+  # Returns an Irc::Bot::Auth::Command from the receiver
   def to_irc_auth_command
     Irc::Bot::Auth::Command.new(self)
   end
@@ -409,7 +409,7 @@ class Bot
         end
       end
 
-      # Resets the password by creating a new onw
+      # Resets the password by creating a new one
       def reset_password
         @password = Auth.random_password
       end

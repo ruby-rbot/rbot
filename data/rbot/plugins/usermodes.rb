@@ -9,12 +9,14 @@
 #
 
 class UserModesPlugin < Plugin
-  Config.register Config::StringValue.new('irc.usermodes',
+  Config.register Config::StringValue.new(
+    'irc.usermodes',
     :default => '',
-    :desc => "User modes to set when connecting to the server")
+    :desc => 'User modes to set when connecting to the server'
+  )
 
-  def help(plugin, topic="")
-    "handles automatic usermode settings on connect. See the config variable irc.usermodes"
+  def help(plugin, topic = '')
+    'handles automatic usermode settings on connect. See the config variable irc.usermodes'
   end
 
   def connect

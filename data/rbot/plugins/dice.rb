@@ -45,7 +45,7 @@ class DicePlugin < Plugin
       :default => 100, :validate => Proc.new{|v| v > 0},
       :desc => "Maximum number of sides per dice.")
 
-  def help(plugin, topic="")
+  def help(plugin, topic = '')
     plugin + " <string> (where <string> is something like: d6 or 2d6 or 2d6+4 or 2d6+1d20 or 2d6+1d5+4d7-3d4-6) => Rolls that set of virtual dice"
   end
 

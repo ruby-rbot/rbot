@@ -575,7 +575,7 @@ class RSSFeedsPlugin < Plugin
     }
   end
 
-  def help(plugin,topic="")
+  def help(plugin,topic = '')
     case topic
     when "show"
       "rss show #{Bold}handle#{Bold} [#{Bold}limit#{Bold}] : show #{Bold}limit#{Bold} (default: 5, max: 15) entries from rss #{Bold}handle#{Bold}; #{Bold}limit#{Bold} can also be in the form a..b, to display a specific range of items"
@@ -965,7 +965,7 @@ class RSSFeedsPlugin < Plugin
         first_run = !feed.last_success
         if (!first_run && @bot.config['rss.announce_timeout'] > 0 &&
            (Time.now - feed.last_success > @bot.config['rss.announce_timeout']))
-          debug "#{feed} wasn't polled for too long, supressing output"
+          debug "#{feed} wasn't polled for too long, suppressing output"
           first_run = true
         end
         oldxml = feed.xml ? feed.xml.dup : nil
@@ -1258,7 +1258,7 @@ class RSSFeedsPlugin < Plugin
         rescue RSS::Error => e
           errors << [parser, e, "parsing rss stream failed, oioi"]
         rescue => e
-          errors << [parser, e, "processing error occured, sorry =("]
+          errors << [parser, e, "processing error occurred, sorry =("]
         end
       end
       unless errors.empty?
@@ -1333,7 +1333,7 @@ plugin.map 'rss change :what of :handle to :new',
 plugin.map 'rss change :what for :handle to :new',
   :action => 'change_rss',
   :auth_path => 'edit',
-  :requirements => { :what => /handle|url|format|type|refesh/ }
+  :requirements => { :what => /handle|url|format|type|refresh/ }
 plugin.map 'rss del :handle',
   :auth_path => 'edit:rm!',
   :action => 'del_rss'
