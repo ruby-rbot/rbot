@@ -177,6 +177,10 @@ class Bot
       :default => false, :requires_restart => true,
       :desc => "Verify the SSL connection?",
       :wizard => true)
+    Config.register Config::StringValue.new('server.ssl_cert',
+      :requires_restart => true,
+      :desc => "The cert file used to authenticate to the server.",
+      :wizard => true)
     Config.register Config::StringValue.new('server.ssl_ca_file',
       :default => default_ssl_ca_file, :requires_restart => true,
       :desc => "The CA file used to verify the SSL connection.",
@@ -496,6 +500,7 @@ class Bot
     @socket = Irc::Socket.new(@config['server.list'], @config['server.bindhost'], 
                               :ssl => @config['server.ssl'],
                               :ssl_verify => @config['server.ssl_verify'],
+                              :ssl_cert => @config['server.ssl_cert'],
                               :ssl_ca_file => @config['server.ssl_ca_file'],
                               :ssl_ca_path => @config['server.ssl_ca_path'],
                               :penalty_pct => @config['send.penalty_pct'])
